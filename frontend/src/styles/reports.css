@@ -1,0 +1,723 @@
+/* =====================================================
+   REPORTS.CSS
+===================================================== */
+
+/* ── Page Shell ──────────────────────────────────── */
+
+.reports-page {
+  padding: 40px 40px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+/* ── State Screens (loading / error / empty) ─────── */
+
+.reports-state-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+}
+
+.reports-loading,
+.reports-error,
+.reports-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  color: #6b7280;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #f3f4ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spin-icon {
+  color: #6366f1;
+  animation: reports-spin 1.2s linear infinite;
+}
+
+@keyframes reports-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.error-icon {
+  color: #ef4444;
+}
+.empty-icon {
+  color: #d1d5db;
+}
+
+.btn-retry {
+  margin-top: 4px;
+  padding: 10px 24px;
+  background: #6366f1;
+  color: #fff;
+  border: none;
+  border-radius: 16px;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.22s ease,
+    transform 0.22s ease,
+    box-shadow 0.22s ease;
+}
+
+.btn-retry:hover {
+  background: #4f46e5;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.28);
+}
+
+.btn-retry:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+}
+
+/* ── HERO ────────────────────────────────────────── */
+
+.reports-hero {
+  position: relative;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 24px;
+  padding: 32px 36px; /* compact — matches webcam-hero rhythm */
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+/* decorative blobs */
+.hero-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(55px);
+  pointer-events: none;
+  z-index: 0;
+}
+.hero-blob-1 {
+  width: 260px;
+  height: 260px;
+  background: rgba(99, 102, 241, 0.09);
+  top: -70px;
+  right: 60px;
+}
+.hero-blob-2 {
+  width: 160px;
+  height: 160px;
+  background: rgba(6, 182, 212, 0.07);
+  bottom: -40px;
+  left: 200px;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 40px;
+}
+
+.hero-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px; /* tighter — matches webcam-hero-text gap */
+}
+
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: #eef2ff;
+  color: #4f46e5;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  width: fit-content;
+}
+
+.hero-title {
+  font-size: 1.625rem; /* matches webcam-hero-title — compact but bold */
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+  color: #111827;
+  margin: 0;
+}
+
+.hero-title-accent {
+  background: linear-gradient(120deg, #6366f1, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-subtitle {
+  font-size: 0.9375rem;
+  color: #6b7280;
+  line-height: 1.6;
+  max-width: 480px;
+  margin: 0;
+}
+
+/* ── Stat Pills ─────────────────────────────────── */
+
+.hero-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.hero-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 13px;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.pill-primary {
+  background: #eef2ff;
+  color: #6366f1;
+}
+.pill-secondary {
+  background: #fdf4ff;
+  color: #8b5cf6;
+}
+.pill-accent {
+  background: #ecfeff;
+  color: #0891b2;
+}
+
+/* ── Health Score Ring ───────────────────────────── */
+
+.hero-score-ring {
+  flex-shrink: 0;
+}
+
+.score-ring-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.progress-ring {
+  display: block;
+}
+
+.score-ring-inner {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.score-ring-val {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  color: #111827;
+  line-height: 1;
+}
+
+.score-ring-label {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: center;
+}
+
+/* ── Section Header ─────────────────────────────── */
+
+.reports-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.section-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #111827;
+  margin: 0;
+}
+
+.section-subtitle {
+  font-size: 0.875rem;
+  color: #9ca3af;
+  margin: 0;
+}
+
+/* ── KPI Grid ────────────────────────────────────── */
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+/* ── KPI Card ────────────────────────────────────── */
+
+.kpi-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  cursor: default;
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+}
+
+.kpi-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.kpi-icon-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* trend icons */
+.trend-icon {
+  flex-shrink: 0;
+}
+.trend-up {
+  color: #10b981;
+}
+.trend-down {
+  color: #ef4444;
+}
+.trend-neutral {
+  color: #d1d5db;
+}
+
+.kpi-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.kpi-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: #111827;
+  margin: 0;
+  line-height: 1;
+}
+
+.kpi-unit {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #9ca3af;
+}
+
+.kpi-label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #6b7280;
+  letter-spacing: 0.01em;
+}
+
+/* ring KPI variant */
+.kpi-ring-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-start;
+}
+
+.kpi-ring-val {
+  position: absolute;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #111827;
+  letter-spacing: -0.02em;
+}
+
+/* ── Bottom Grid ─────────────────────────────────── */
+
+.reports-bottom-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+/* ── Analytics Cards ─────────────────────────────── */
+
+.analytics-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 24px;
+  padding: 28px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.analytics-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.09);
+}
+
+.analytics-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.analytics-card-icon-wrap {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.analytics-card-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 3px;
+  letter-spacing: -0.01em;
+}
+
+.analytics-card-sub {
+  font-size: 0.8125rem;
+  color: #9ca3af;
+  margin: 0;
+}
+
+/* ── Insight Rows ─────────────────────────────────── */
+
+.insight-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.insight-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid #f3f4f6;
+  gap: 12px;
+}
+
+.insight-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.insight-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.insight-icon-wrap {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.insight-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.insight-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.insight-value {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* ── Status Badges ───────────────────────────────── */
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge-success {
+  background: #d1fae5;
+  color: #065f46;
+}
+.badge-info {
+  background: #eef2ff;
+  color: #4338ca;
+}
+.badge-warning {
+  background: #fef3c7;
+  color: #92400e;
+}
+.badge-danger {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* ── AI Suggestions ──────────────────────────────── */
+
+.suggestions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.suggestion-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  background: #fafafa;
+  border: 1px solid #f3f4f6;
+  border-radius: 16px;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.suggestion-item:hover {
+  background: #f5f3ff;
+  border-color: #ddd6fe;
+}
+
+.suggestion-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #8b5cf6;
+  flex-shrink: 0;
+  margin-top: 5px;
+}
+
+.suggestion-text {
+  font-size: 0.875rem;
+  color: #374151;
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* ── Reduced Motion ──────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .kpi-card,
+  .analytics-card,
+  .btn-retry,
+  .suggestion-item {
+    transition: none;
+    transform: none;
+  }
+
+  .spin-icon {
+    animation: none;
+  }
+}
+
+/* ── Responsive ──────────────────────────────────── */
+
+@media (max-width: 1024px) {
+  .reports-page {
+    padding: 24px;
+  }
+
+  .reports-hero {
+    padding: 28px 28px;
+  }
+
+  .hero-title {
+    font-size: 1.5rem;
+  }
+
+  .kpi-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .reports-page {
+    padding: 24px 24px 48px;
+  }
+
+  .hero-subtitle {
+    max-width: 100%;
+  }
+
+  .reports-bottom-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .reports-page {
+    padding: 16px 16px 40px;
+    gap: 20px;
+  }
+
+  .reports-hero {
+    padding: 24px 20px;
+  }
+
+  .hero-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 24px;
+  }
+
+  .hero-score-ring {
+    align-self: center;
+  }
+
+  .hero-title {
+    font-size: 1.375rem;
+  }
+
+  .hero-pills {
+    flex-wrap: wrap;
+  }
+
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .analytics-card {
+    padding: 20px;
+  }
+
+  .insight-right {
+    gap: 6px;
+  }
+}
+
+@media (max-width: 600px) {
+  .reports-hero {
+    padding: 20px 16px;
+  }
+
+  .hero-title {
+    font-size: 1.25rem;
+  }
+
+  .kpi-card {
+    padding: 18px 16px;
+  }
+
+  .kpi-value {
+    font-size: 1.5rem;
+  }
+
+  .analytics-card {
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .suggestion-item {
+    padding: 12px 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .reports-hero {
+    padding: 18px 14px;
+  }
+
+  .hero-title {
+    font-size: 1.125rem;
+  }
+
+  .kpi-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .insight-right {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+  }
+
+  .score-ring-val {
+    font-size: 1.5rem;
+  }
+}

@@ -1,0 +1,147 @@
+/* =====================================
+   NAVBAR.CSS  
+===================================== */
+
+/* ── Navbar Shell ─────────────────────────────────────────────────────── */
+
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 40px;
+  background: #f5f7fb;
+  border-bottom: 1px solid transparent;
+  flex-shrink: 0;
+  gap: 24px;
+}
+
+/* ── Left: Title + Tagline ────────────────────────────────────────────── */
+
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.navbar-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+  letter-spacing: -0.01em;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.navbar-subtitle {
+  font-size: 12px;
+  font-weight: 400;
+  color: #9ca3af;
+  margin: 0;
+  white-space: nowrap;
+}
+
+/* ── Right: Date ──────────────────────────────────────────────────────── */
+
+.navbar-right {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.navbar-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+/* ── Hamburger Button (mobile only, hidden on desktop) ────────────────── */
+
+.navbar-menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  color: #6b7280;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease;
+}
+
+.navbar-menu-btn:hover {
+  background: #f5f7fb;
+  color: #111827;
+}
+
+.navbar-menu-btn:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+}
+
+/* ── Responsive ───────────────────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .navbar {
+    padding: 16px 20px;
+  }
+
+  .navbar-subtitle {
+    display: none;
+  }
+
+  .navbar-left {
+    align-items: baseline;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Show the hamburger on mobile */
+  .navbar-menu-btn {
+    display: flex;
+  }
+
+  .navbar-left {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 600px) {
+  .navbar {
+    padding: 12px 16px;
+  }
+
+  .navbar-title {
+    font-size: 13px;
+  }
+
+  .navbar-date {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 400px) {
+  /* Very small screens: hide date label text, keep icon */
+  .navbar-date span:not(.navbar-date-icon) {
+    display: none;
+  }
+}

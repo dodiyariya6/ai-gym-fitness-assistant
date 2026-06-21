@@ -1,0 +1,663 @@
+/* =====================================
+   GYMFINDER.CSS
+===================================== */
+
+/* ── Root / page shell ───────────────────────────────────────────────────── */
+
+.gf-page {
+  /* Mirror workout-page-shell exactly */
+  padding: 40px 40px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  max-width: 1280px;
+  margin: 0 auto;
+  font-family: inherit;
+
+  /* Local aliases — same values as Workout */
+  --gf-primary: var(--accent-500, #6366f1);
+  --gf-primary-dark: var(--accent-600, #4f46e5);
+  --gf-primary-soft: var(--accent-50, #eef2ff);
+  --gf-bg: var(--secondary-background, #f8fafc);
+  --gf-card: #ffffff;
+  --gf-border: var(--border, #e5e7eb);
+  --gf-text: var(--text-primary, #111827);
+  --gf-text-secondary: var(--text-secondary, #6b7280);
+  --gf-transition: var(--transition, 0.22s ease);
+}
+
+/* ── Hero — matches workout-hero ─────────────────────────────────────────── */
+
+.gf-hero {
+  position: relative;
+  background: #ffffff;
+  border: 1px solid var(--gf-border);
+  border-radius: 24px;
+  padding: 48px;
+  overflow: hidden;
+}
+
+.gf-hero-accent {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.gf-hero-accent--a {
+  width: 380px;
+  height: 380px;
+  background: radial-gradient(
+    circle,
+    rgba(99, 102, 241, 0.07) 0%,
+    transparent 70%
+  );
+  top: -100px;
+  right: -60px;
+}
+
+.gf-hero-accent--b {
+  width: 260px;
+  height: 260px;
+  background: radial-gradient(
+    circle,
+    rgba(16, 185, 129, 0.06) 0%,
+    transparent 70%
+  );
+  bottom: -80px;
+  left: 40%;
+}
+
+.gf-hero-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 48px;
+}
+
+.gf-hero-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.gf-hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: #eef2ff;
+  color: #4f46e5;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin-bottom: 20px;
+  width: fit-content;
+}
+
+.gf-hero-title {
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: #111827;
+  line-height: 1.15;
+  margin: 0 0 16px;
+}
+
+.gf-hero-subtitle {
+  font-size: 15px;
+  color: #6b7280;
+  line-height: 1.7;
+  margin: 0;
+  max-width: 420px;
+}
+
+/* ── Controls card — matches workout-form-card ───────────────────────────── */
+
+.gf-controls-card {
+  background: #ffffff;
+  border: 1px solid var(--gf-border);
+  border-left: 3px solid var(--gf-primary);
+  border-radius: 24px;
+  padding: 28px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.gf-controls-header h2 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--gf-text);
+  margin: 0 0 4px;
+}
+
+.gf-controls-header p {
+  font-size: 13px;
+  color: #9ca3af;
+  margin: 0;
+}
+
+.gf-controls-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 24px;
+}
+
+/* ── Location control ────────────────────────────────────────────────────── */
+
+.gf-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gf-field-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  letter-spacing: 0.01em;
+}
+
+.gf-field-label svg {
+  color: #9ca3af;
+}
+
+/* Location button — ghost style matching hero-btn--ghost */
+.gf-location-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 18px;
+  border-radius: 16px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--gf-border);
+  background: transparent;
+  color: #374151;
+  transition:
+    background var(--gf-transition),
+    border-color var(--gf-transition),
+    box-shadow var(--gf-transition);
+  white-space: nowrap;
+}
+
+.gf-location-btn:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.gf-location-btn--ready {
+  border-color: var(--gf-primary);
+  color: var(--gf-primary);
+  background: var(--gf-primary-soft);
+}
+
+.gf-location-btn--ready:hover:not(:disabled) {
+  background: #e0e7ff;
+  border-color: var(--gf-primary-dark);
+}
+
+.gf-location-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.gf-location-btn:focus-visible {
+  outline: 2px solid var(--gf-primary);
+  outline-offset: 2px;
+}
+
+/* ── Radius slider ───────────────────────────────────────────────────────── */
+
+.gf-radius-slider {
+  width: 200px;
+  accent-color: var(--gf-primary);
+  cursor: pointer;
+  height: 4px;
+}
+
+.gf-radius-slider:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.gf-radius-ticks {
+  display: flex;
+  justify-content: space-between;
+  width: 200px;
+  font-size: 11px;
+  color: #9ca3af;
+  font-weight: 500;
+  margin-top: 4px;
+}
+
+/* ── Find Gyms button — matches generate-btn ─────────────────────────────── */
+
+.gf-search-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 28px;
+  border: none;
+  border-radius: 16px;
+  background: var(--gf-primary);
+  color: white;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: auto;
+  transition:
+    background var(--gf-transition),
+    transform var(--gf-transition),
+    box-shadow var(--gf-transition);
+}
+
+.gf-search-btn:hover:not(:disabled) {
+  background: var(--gf-primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.28);
+}
+
+.gf-search-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.gf-search-btn:focus-visible {
+  outline: 2px solid var(--gf-primary);
+  outline-offset: 2px;
+}
+
+/* ── Results section header ──────────────────────────────────────────────── */
+
+.gf-results-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.gf-results-header h2 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--gf-text);
+  margin: 0 0 4px;
+}
+
+.gf-results-header p {
+  font-size: 13px;
+  color: #9ca3af;
+  margin: 0;
+}
+
+.gf-results-count-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #ecfdf5;
+  color: #059669;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+/* ── Results card wrapper ────────────────────────────────────────────────── */
+
+.gf-results-card {
+  background: #ffffff;
+  border: 1px solid var(--gf-border);
+  border-radius: 24px;
+  padding: 28px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Gym grid ────────────────────────────────────────────────────────────── */
+
+.gf-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 16px;
+}
+
+/* ── Gym card — matches workout-timeline-card ────────────────────────────── */
+
+.gf-card {
+  background: #f8fafc;
+  border: 1px solid var(--gf-border);
+  border-radius: 20px;
+  overflow: hidden;
+  position: relative;
+  transition:
+    transform var(--gf-transition),
+    box-shadow var(--gf-transition);
+}
+
+.gf-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
+}
+
+.gf-card-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Card header row: icon + name */
+.gf-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.gf-card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: #eef2ff;
+  color: var(--gf-primary);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.gf-card-name {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--gf-text);
+  line-height: 1.35;
+}
+
+/* Distance tag — matches workout-stat-label style */
+.gf-distance-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  background: #ffffff;
+  border: 1px solid var(--gf-border);
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gf-text);
+  align-self: flex-start;
+}
+
+.gf-distance-tag svg {
+  color: var(--gf-primary);
+}
+
+/* Meta row (address, phone, website) */
+.gf-card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 4px;
+  border-top: 1px solid var(--gf-border);
+}
+
+.gf-card-meta-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  font-size: 13px;
+  color: var(--gf-text-secondary);
+  line-height: 1.45;
+}
+
+.gf-card-meta-row svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #9ca3af;
+}
+
+.gf-link {
+  font-size: 13px;
+  color: var(--gf-primary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: opacity var(--gf-transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.gf-link:hover {
+  opacity: 0.75;
+  text-decoration: underline;
+}
+
+/* ── Directions button — matches hero-btn--ghost ─────────────────────────── */
+
+.gf-directions-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 16px;
+  border-radius: 14px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  border: 1px solid var(--gf-primary);
+  background: transparent;
+  color: var(--gf-primary);
+  transition:
+    background var(--gf-transition),
+    color var(--gf-transition),
+    transform var(--gf-transition),
+    box-shadow var(--gf-transition);
+}
+
+.gf-directions-btn:hover {
+  background: var(--gf-primary);
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.22);
+}
+
+/* ── Shared state block — matches empty-state ────────────────────────────── */
+
+.gf-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--gf-text-secondary);
+}
+
+.gf-state svg {
+  color: var(--gf-primary);
+  margin-bottom: 8px;
+  opacity: 0.45;
+}
+
+.gf-state p {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--gf-text);
+}
+
+.gf-state span {
+  font-size: 13px;
+  color: var(--gf-text-secondary);
+}
+
+/* ── Error banner ────────────────────────────────────────────────────────── */
+
+.gf-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 18px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 16px;
+  font-size: 13.5px;
+  color: #b91c1c;
+  line-height: 1.5;
+}
+
+.gf-error svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ── Spinner ─────────────────────────────────────────────────────────────── */
+
+.gf-spin {
+  animation: gf-spin 0.75s linear infinite;
+}
+
+@keyframes gf-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .gf-page {
+    padding: 24px 24px 48px;
+    gap: 24px;
+  }
+
+  .gf-hero {
+    padding: 32px 28px;
+  }
+
+  .gf-hero-content {
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .gf-hero-title {
+    font-size: 30px;
+  }
+
+  .gf-hero-subtitle {
+    max-width: 100%;
+  }
+
+  .gf-controls-row {
+    gap: 20px;
+  }
+
+  .gf-search-btn {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .gf-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .gf-hero {
+    padding: 28px 20px;
+  }
+
+  .gf-hero-title {
+    font-size: 26px;
+  }
+
+  .gf-controls-card {
+    padding: 20px;
+  }
+
+  .gf-results-card {
+    padding: 20px;
+  }
+
+  .gf-controls-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .gf-field {
+    width: 100%;
+  }
+
+  .gf-location-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .gf-radius-slider,
+  .gf-radius-ticks {
+    width: 100%;
+  }
+
+  .gf-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .gf-page {
+    padding: 16px 16px 40px;
+    gap: 20px;
+  }
+
+  .gf-hero {
+    padding: 24px 16px;
+  }
+
+  .gf-hero-title {
+    font-size: 22px;
+  }
+
+  .gf-controls-card {
+    padding: 16px;
+  }
+
+  .gf-results-card {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .gf-hero-title {
+    font-size: 20px;
+  }
+
+  .gf-state {
+    padding: 32px 16px;
+  }
+
+  .gf-card-body {
+    padding: 16px;
+  }
+}

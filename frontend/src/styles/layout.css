@@ -1,0 +1,47 @@
+/* =====================================
+   LAYOUT.CSS  
+===================================== */
+
+/* ── App Shell ────────────────────────────────────────────────────────── */
+
+.layout {
+  display: flex;
+  min-height: 100vh;
+  background: #f5f7fb;
+}
+
+/* ── Content Column ───────────────────────────────────────────────────── */
+
+.content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── Page Content ─────────────────────────────────────────────────────── */
+
+.page-content {
+  flex: 1;
+  padding: 0;
+  overflow-y: auto;
+}
+
+/* ── Sidebar Overlay (mobile only) ───────────────────────────────────── */
+
+.sidebar-overlay {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .sidebar-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    z-index: 99;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
+}

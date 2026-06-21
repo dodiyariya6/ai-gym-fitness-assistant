@@ -1,0 +1,600 @@
+/* =====================================
+   DIETICIAN.CSS 
+===================================== */
+
+/* ── Root ─────────────────────────────────────────────────────────────── */
+
+.diet-root {
+  padding: 40px 40px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+/* ── Hero ─────────────────────────────────────────────────────────────── */
+
+.diet-hero {
+  position: relative;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 48px;
+  overflow: hidden;
+}
+
+.diet-hero-blob {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.diet-blob-1 {
+  width: 380px;
+  height: 380px;
+  background: radial-gradient(
+    circle,
+    rgba(99, 102, 241, 0.07) 0%,
+    transparent 70%
+  );
+  top: -100px;
+  right: -60px;
+}
+
+.diet-blob-2 {
+  width: 260px;
+  height: 260px;
+  background: radial-gradient(
+    circle,
+    rgba(16, 185, 129, 0.06) 0%,
+    transparent 70%
+  );
+  bottom: -80px;
+  left: 40%;
+}
+
+.diet-hero-content {
+  position: relative;
+  z-index: 1;
+  max-width: 560px;
+}
+
+.diet-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: #eef2ff;
+  color: #4f46e5;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin-bottom: 20px;
+}
+
+.diet-heading {
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: #111827;
+  line-height: 1.15;
+  margin-bottom: 16px;
+}
+
+.diet-subtext {
+  font-size: 15px;
+  color: #6b7280;
+  line-height: 1.7;
+  margin-bottom: 28px;
+  max-width: 440px;
+}
+
+.diet-hero-pills {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.diet-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.pill-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dot-indigo {
+  background: #6366f1;
+}
+.dot-green {
+  background: #10b981;
+}
+.dot-cyan {
+  background: #06b6d4;
+}
+
+/* ── Form Card ────────────────────────────────────────────────────────── */
+
+.diet-form-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-left: 3px solid #6366f1;
+  border-radius: 24px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.diet-form-title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.diet-form-icon {
+  color: #6366f1;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.diet-form-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 4px;
+}
+
+.diet-form-subtitle {
+  font-size: 13px;
+  color: #9ca3af;
+  margin: 0;
+}
+
+/* ── Field Sections ───────────────────────────────────────────────────── */
+
+.diet-fields-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.diet-fields-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #d1d5db;
+  margin: 0;
+}
+
+.diet-fields-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.diet-fields-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+.diet-fields-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+.diet-fields-4 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+/* ── Input Group ──────────────────────────────────────────────────────── */
+
+.diet-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.diet-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  letter-spacing: 0.01em;
+}
+
+.diet-label svg {
+  color: #9ca3af;
+}
+
+.diet-input {
+  padding: 11px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 13.5px;
+  font-family: inherit;
+  color: #111827;
+  background: #f9fafb;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.diet-input::placeholder {
+  color: #c4c8d0;
+}
+
+.diet-input:focus {
+  border-color: #6366f1;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+/* ── Generate Button ──────────────────────────────────────────────────── */
+
+.diet-generate-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 13px 24px;
+  background: #6366f1;
+  color: #ffffff;
+  border: none;
+  border-radius: 16px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.diet-generate-btn:hover:not(:disabled) {
+  background: #4f46e5;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.28);
+}
+
+.diet-generate-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.diet-btn-secondary {
+  background: transparent;
+  color: #6366f1;
+  border: 1.5px solid #c7d2fe;
+  width: auto;
+  padding: 10px 20px;
+  font-size: 13px;
+}
+
+.diet-btn-secondary:hover:not(:disabled) {
+  background: #eef2ff;
+  border-color: #6366f1;
+  box-shadow: none;
+  transform: none;
+}
+
+.spinner-dark {
+  border-color: rgba(99, 102, 241, 0.25);
+  border-top-color: #6366f1;
+}
+
+/* ── Results Sections ─────────────────────────────────────────────────── */
+
+.diet-results-section,
+.diet-grocery-section {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 24px;
+  padding: 28px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.diet-results-title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+/* ── Meal Cards Grid ──────────────────────────────────────────────────── */
+
+.meal-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.meal-card {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 18px 20px;
+  cursor: default;
+  transition:
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.meal-card:hover {
+  border-color: #c7d2fe;
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.08);
+}
+
+.meal-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.meal-icon-wrap {
+  width: 32px;
+  height: 32px;
+  background: #eef2ff;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6366f1;
+  flex-shrink: 0;
+}
+
+.meal-card-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+  text-transform: capitalize;
+}
+
+.meal-card-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.meal-card-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+.meal-item-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #6366f1;
+  flex-shrink: 0;
+  margin-top: 6px;
+  opacity: 0.5;
+}
+
+/* ── Raw fallback output ──────────────────────────────────────────────── */
+
+.meal-raw-output {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 20px 24px;
+}
+
+.meal-output {
+  white-space: pre-wrap;
+  font-family: inherit;
+  font-size: 13.5px;
+  line-height: 1.8;
+  color: #374151;
+  margin: 0;
+}
+
+/* ── Grocery CTA Banner ───────────────────────────────────────────────── */
+
+.grocery-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  background: #f5f7fb;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 18px 20px;
+}
+
+.grocery-cta-text {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  color: #6366f1;
+}
+
+.grocery-cta-text svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.grocery-cta-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 2px;
+}
+
+.grocery-cta-subtitle {
+  font-size: 12px;
+  color: #9ca3af;
+  margin: 0;
+}
+
+/* ── Grocery List ─────────────────────────────────────────────────────── */
+
+.grocery-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2px 28px;
+}
+
+.grocery-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.18s ease;
+  user-select: none;
+}
+
+.grocery-item:hover {
+  background: #f5f7fb;
+}
+
+.grocery-check-icon {
+  color: #d1d5db;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  transition: color 0.18s ease;
+}
+
+.grocery-item.checked .grocery-check-icon {
+  color: #10b981;
+}
+
+.grocery-item-text {
+  font-size: 13.5px;
+  color: #374151;
+  line-height: 1.5;
+  transition:
+    color 0.18s ease,
+    text-decoration 0.18s ease;
+}
+
+.grocery-item.checked .grocery-item-text {
+  color: #9ca3af;
+  text-decoration: line-through;
+}
+
+/* ── Responsive ───────────────────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .diet-root {
+    padding: 24px 24px 48px;
+  }
+
+  .diet-hero {
+    padding: 32px 28px;
+  }
+
+  .diet-heading {
+    font-size: 28px;
+  }
+
+  .diet-fields-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .meal-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .grocery-cta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .diet-btn-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .diet-hero {
+    padding: 28px 20px;
+  }
+
+  .diet-heading {
+    font-size: 26px;
+  }
+
+  .diet-subtext {
+    max-width: 100%;
+  }
+
+  .diet-form-card,
+  .diet-results-section,
+  .diet-grocery-section {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 600px) {
+  .diet-root {
+    padding: 16px 16px 40px;
+    gap: 20px;
+  }
+
+  .diet-hero {
+    padding: 24px 16px;
+  }
+
+  .diet-heading {
+    font-size: 24px;
+  }
+
+  .diet-fields-3,
+  .diet-fields-2,
+  .diet-fields-4 {
+    grid-template-columns: 1fr;
+  }
+
+  .meal-cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .grocery-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .diet-form-card {
+    padding: 16px;
+  }
+}

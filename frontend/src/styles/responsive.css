@@ -1,0 +1,120 @@
+/* =====================================
+   RESPONSIVE.CSS 
+===================================== */
+
+/* ── Large tablet (≤ 1024px) ──────────────────────────────────────────── */
+
+@media (max-width: 1024px) {
+  .reports-page {
+    padding: 24px;
+  }
+
+  .reports-hero {
+    padding: 36px;
+  }
+}
+
+/* ── Tablet (≤ 900px) ─────────────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .dashboard-bottom {
+    grid-template-columns: 1fr;
+  }
+
+  .history-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ── Tablet (≤ 768px) ─────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .reports-page {
+    padding: 16px;
+    gap: 20px;
+  }
+
+  .reports-hero {
+    padding: 28px 24px;
+  }
+
+  .reports-bottom-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Charts: allow them to shrink gracefully */
+  .recharts-wrapper,
+  .recharts-surface {
+    max-width: 100% !important;
+  }
+}
+
+/* ── Mobile (≤ 600px) ─────────────────────────────────────────────────── */
+
+@media (max-width: 600px) {
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .quick-actions-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .history-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .macros-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .page-title {
+    font-size: 1.6rem;
+  }
+
+  .diet-form,
+  .habit-form {
+    grid-template-columns: 1fr;
+  }
+
+  /* Prevent horizontal overflow on any page */
+  * {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  img,
+  video,
+  canvas,
+  svg {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+/* ── Small mobile (≤ 480px) ───────────────────────────────────────────── */
+
+@media (max-width: 480px) {
+  .kpi-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .insight-right {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+  }
+
+  /* Stack any remaining 2-col grids */
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}

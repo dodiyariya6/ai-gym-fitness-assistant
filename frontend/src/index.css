@@ -1,0 +1,74 @@
+/* src/index.css */
+/*
+==================================================
+AI Gym & Fitness Assistant
+
+File: index.css
+
+Purpose:
+Defines global styles and reset rules
+for the entire application.
+
+Functionality:
+- Resets browser default styles.
+- Defines global typography.
+- Defines global colors.
+- Standardizes spacing.
+- Standardizes element behavior.
+
+Responsibilities:
+Global styling
+CSS reset
+Typography setup
+
+Used By:
+Entire frontend application
+
+==================================================
+*/
+* {
+  margin: 0;
+
+  padding: 0;
+
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+
+  min-height: 100vh;
+}
+
+body {
+  font-family: "Inter", "Segoe UI", sans-serif;
+
+  background: #f8fafc;
+
+  color: #1f2937;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+a {
+  text-decoration: none;
+
+  color: inherit;
+}
+
+img {
+  max-width: 100%;
+
+  display: block;
+}
+
+ul {
+  list-style: none;
+}
