@@ -1,12 +1,12 @@
 # AI Gym & Fitness Assistant
 
-> AI-powered full-stack fitness platform that combines workout tracking, computer vision exercise analysis, personalized nutrition planning, habit monitoring, and intelligent fitness assistance into one unified ecosystem.
+> > An AI-powered fitness assistant that combines workout tracking, computer vision, personalized nutrition planning, habit monitoring, and smart fitness guidance into one unified application.
 
-![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![React](https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=000000)
 ![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
 ![Google Gemini](https://img.shields.io/badge/Gemini_AI-4285F4?style=for-the-badge&logo=google&logoColor=white)
 ![MediaPipe](https://img.shields.io/badge/MediaPipe-00897B?style=for-the-badge&logo=google&logoColor=white)
 
@@ -64,6 +64,14 @@
 | Google Gemini API | Meal planning, fitness chatbot, AI suggestions |
 | MediaPipe         | Human pose estimation and exercise analysis    |
 
+### Gym Finder Services
+
+| Technology    | Role              |
+| ------------- | ----------------- |
+| OpenStreetMap | Map provider      |
+| Nominatim     | Geocoding         |
+| Overpass API  | Nearby gym search |
+
 ---
 
 ## System Architecture
@@ -81,10 +89,14 @@ FastAPI Backend  (Python, SQLAlchemy)
 Neon PostgreSQL  (Single Source of Truth)
   |
   v
-AI Services
-  |-- Google Gemini API   Meal Plans, Chatbot, Suggestions
-  |-- MediaPipe           Real-Time Pose Detection
-  |-- MET Formula Engine  Calorie Calculation
+AI Services                          Gym Finder Services
+  |-- Google Gemini API                |-- OpenStreetMap
+  |     Meal Plans, Chatbot,           |-- Nominatim
+  |     Suggestions                    |-- Overpass API
+  |-- MediaPipe
+  |     Real-Time Pose Detection
+  |-- MET Formula Engine
+        Calorie Calculation
 ```
 
 ---
@@ -93,39 +105,27 @@ AI Services
 
 ### Authentication
 
-Handles user registration, login, and access control. Passwords are hashed with Bcrypt. JWT tokens secure every protected route across the application.
-
----
+Handles user registration, login, and access control. Passwords are hashed with Bcrypt. JWT tokens secure every protected route.
 
 ### Dashboard
 
-Displays a real-time overview of total workouts, calories burned, weekly goal progress, health score, and habit trends. All values are fetched live from the database — no hardcoded data.
-
----
+Real-time overview of total workouts, calories burned, weekly goal progress, health score, and habit trends. All values are fetched live from the database.
 
 ### Profile
 
-The single source of truth for personalization. Stores personal info, location, fitness goals, and activity level. Generates daily targets for water, sleep, steps, and calories. Feeds data directly into the Dietician, Habit Tracker, Reports, and Gym Finder modules.
-
----
+Single source of truth for personalization. Stores personal info, location, fitness goals, and activity level. Generates daily targets for water, sleep, steps, and calories. Feeds data into the Dietician, Habit Tracker, Reports, and Gym Finder modules.
 
 ### AI Dietician
 
-Calculates BMI, BMR (Mifflin-St Jeor), and TDEE from profile data, then calls Google Gemini to generate a personalized five-meal plan with macronutrient targets and a grocery list.
-
----
+Calculates BMI, BMR (Mifflin-St Jeor), and TDEE from profile data, then calls Gemini to generate a personalized five-meal plan with macronutrient targets and a grocery list.
 
 ### Workout Tracker
 
-Records exercise name, sets, reps, duration, and date. Calories are automatically estimated using the MET formula against the user's body weight. Full workout history is maintained per user.
-
----
+Records exercise name, sets, reps, duration, and date. Calories are estimated using the MET formula against the user's body weight. Full history is maintained per user.
 
 ### AI Webcam Trainer
 
-The core computer vision module. Uses MediaPipe Pose Detection to track body landmarks in real time, count repetitions via joint angle analysis, and display a live skeleton overlay with form feedback. Supports Squats, Bicep Curls, Pushups, Lunges, and Jumping Jacks.
-
----
+Uses MediaPipe Pose Detection to track body landmarks in real time, count reps via joint angle analysis, and display a live skeleton overlay with form feedback. Supports Squats, Bicep Curls, Pushups, Lunges, and Jumping Jacks.
 
 ### Pose Analyzer
 
@@ -139,47 +139,33 @@ Scores exercise quality from webcam sessions on a 50–100 scale. Scores feed in
 | 60 – 69  | Needs Improvement |
 | 50 – 59  | Poor              |
 
----
-
 ### Habit Tracker
 
-Logs daily water intake, sleep hours, steps, and workout completion. Prevents duplicate entries, allows past-date logging, and restricts future dates. Displays a weekly habit matrix and full history timeline.
-
----
+Logs daily water intake, sleep hours, steps, and workout completion. Prevents duplicate entries, allows past-date logging, and restricts future dates. Displays a 14-day habit matrix and full history timeline.
 
 ### Virtual Gym Buddy
 
-A Gemini-powered fitness chatbot. Responds to questions about workouts, diet, goals, and healthy habits with personalized, context-aware answers.
-
----
+Gemini-powered fitness chatbot. Responds to questions about workouts, diet, goals, and healthy habits with context-aware answers.
 
 ### Reports
 
-Aggregates health score, form score, average sleep and water intake, step totals, and workout statistics into a weekly summary. Gemini generates actionable improvement suggestions from the user's data.
-
----
+Aggregates health score, form score, average sleep and water intake, step totals, and workout statistics into a weekly summary. Gemini generates actionable improvement suggestions from the user's real data.
 
 ### Wellness Score
 
-Computes a single unified health score from water intake, sleep, steps, workout completion, form score, and habit consistency. Gives users a quick, honest picture of their overall health.
-
----
+Computes a unified health score from water intake, sleep, steps, workout completion, form score, and habit consistency.
 
 ### Consistency Tracker
 
-Tracks current streak, longest streak, total successful days, and weekly and monthly consistency percentages. Designed to build long-term discipline through visible progress.
-
----
+Tracks current streak, longest streak, total successful days, and weekly and monthly consistency percentages.
 
 ### Achievement System
 
 Automatically awards badges when users hit milestones: First Workout, Hydration Hero, Sleep Champion, Weekly Warrior, Goal Crusher, Habit Builder, Step Master, and AI Explorer.
 
----
-
 ### Gym Finder
 
-Detects the user's location from their profile and discovers nearby fitness centers using OpenStreetMap, Nominatim, and the Overpass API. Provides an adjustable search radius and direct Google Maps directions.
+Reads the user's location from their profile and finds nearby fitness centers using OpenStreetMap, Nominatim, and the Overpass API. Supports an adjustable search radius and links directly to Google Maps directions.
 
 ---
 
@@ -193,12 +179,13 @@ Complete Profile  (goals, activity level, location)
   |
   v
 Daily Activity
-  |-- Log Habits    (water, sleep, steps)
-  |-- Log Workout   (manual entry)
-  |-- Webcam        (AI pose detection + rep counting)
+  |-- Log Habits          (water, sleep, steps)
+  |-- Log Workout         (manual entry)
+  |-- Webcam Analysis     (AI pose detection + rep counting)
+  |-- Search Nearby Gyms  (Gym Finder)
   |
   v
-PostgreSQL  (all data persisted)
+Neon PostgreSQL  (all data persisted)
   |
   v
 Dashboard   (live metrics + trends)
@@ -228,29 +215,49 @@ Analytics   (scores, achievements, streaks)
 
 ## Screenshots
 
-**Dashboard**
+### Dashboard
 
-![Dashboard](screenshots/dashboard.png)
+![Dashboard](screenshots/dashboard-hero.png)
 
-**AI Webcam Trainer**
+### Analytics & Consistency Tracker
 
-![Webcam Trainer](screenshots/webcam.png)
+![Analytics](screenshots/dashboard-analytics.png)
 
-**Workout History**
+### AI Dietician
 
-![Workout History](screenshots/workout-history.png)
+![AI Dietician](screenshots/dietician-mealplan.png)
 
-**AI Dietician**
+### AI Fitness Chat
 
-![Dietician](screenshots/dietician.png)
+![Fitness Chat](screenshots/fitness-chat.png)
 
-**Habit Tracker**
+### Habit Tracker
 
-![Habit Tracker](screenshots/habits.png)
+![Habit Tracker](screenshots/habit-tracker.png)
 
-**Reports**
+### Workout Tracker
 
-![Reports](screenshots/reports.png)
+![Workout Tracker](screenshots/workout-tracker.png)
+
+### Webcam Trainer Interface
+
+![Webcam Trainer](screenshots/webcam-trainer.png)
+
+### Real-Time Pose Detection
+
+![Pose Detection](screenshots/webcam-live-detection.png)
+
+### Gym Finder
+
+![Gym Finder](screenshots/gym-fnder.png)
+
+### Reports & Insights
+
+![Reports](screenshots/reports-overview.png)
+
+### Profile & Personalized Goals
+
+![Profile](screenshots/profile.png)
 
 ---
 
@@ -314,84 +321,6 @@ VITE_API_BASE_URL=http://127.0.0.1:8000
 
 ---
 
-## Folder Structure
-
-```
-AI-Gym-Fitness-Assistant/
-|
-|-- backend/
-|   |-- app/
-|   |   |-- models/
-|   |   |   |-- user.py
-|   |   |   |-- workout.py
-|   |   |   |-- habit.py
-|   |   |   |-- profile.py
-|   |   |   |-- meal_plan.py
-|   |   |
-|   |   |-- routers/
-|   |   |   |-- auth.py
-|   |   |   |-- workout.py
-|   |   |   |-- habit.py
-|   |   |   |-- profile.py
-|   |   |   |-- pose.py
-|   |   |   |-- dietician.py
-|   |   |   |-- reports.py
-|   |   |
-|   |   |-- services/
-|   |   |   |-- auth_service.py
-|   |   |   |-- workout_service.py
-|   |   |   |-- habit_service.py
-|   |   |   |-- pose_service.py
-|   |   |   |-- squat_service.py
-|   |   |   |-- curl_service.py
-|   |   |   |-- pushup_service.py
-|   |   |   |-- lunge_service.py
-|   |   |   |-- jumping_jack_service.py
-|   |   |
-|   |   |-- schemas/
-|   |   |   |-- workout.py
-|   |   |   |-- habit.py
-|   |   |   |-- profile.py
-|   |   |
-|   |   |-- database.py
-|   |   |-- main.py
-|   |
-|   |-- requirements.txt
-|
-|-- frontend/
-|   |-- src/
-|   |   |-- pages/
-|   |   |   |-- Dashboard.jsx
-|   |   |   |-- Workout.jsx
-|   |   |   |-- Webcam.jsx
-|   |   |   |-- Habits.jsx
-|   |   |   |-- Dietician.jsx
-|   |   |   |-- Profile.jsx
-|   |   |   |-- Reports.jsx
-|   |   |   |-- GymFinder.jsx
-|   |   |   |-- Chatbot.jsx
-|   |   |   |-- Login.jsx
-|   |   |   |-- Register.jsx
-|   |   |
-|   |   |-- components/
-|   |   |-- layouts/
-|   |   |-- services/
-|   |   |   |-- api.js
-|   |   |   |-- workoutService.js
-|   |   |   |-- habitService.js
-|   |   |   |-- profileService.js
-|   |   |
-|   |   |-- styles/
-|   |
-|   |-- index.html
-|   |-- vite.config.js
-|   |-- package.json
-|
-|-- README.md
-```
-
----
-
 ## Future Improvements
 
 - React Native mobile application for iOS and Android
@@ -402,14 +331,14 @@ AI-Gym-Fitness-Assistant/
 
 ---
 
-## Contributors
+## Contributor
 
-| Name        | Role                                                 |
-| ----------- | ---------------------------------------------------- |
-| [Your Name] | Full-Stack Development, AI Integration, Project Lead |
+**Riya Dodiya**
+
+Developed the complete AI Gym & Fitness Assistant application, including frontend development, backend development, database integration, AI module integration, testing, documentation, and deployment.
 
 ---
 
 ## License
 
-Developed as a B.Tech Major Project for academic submission. For usage or collaboration inquiries, contact the contributor directly.
+Developed as a Project for academic submission. For usage or collaboration inquiries, contact the contributor directly.
