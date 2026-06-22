@@ -243,10 +243,6 @@ Analytics   (scores, achievements, streaks)
 
 ![Webcam Trainer](screenshots/webcam-trainer.png)
 
-### Real-Time Pose Detection
-
-![Pose Detection](screenshots/webcam-live-detection.png)
-
 ### Gym Finder
 
 ![Gym Finder](screenshots/gym-fnder.png)
