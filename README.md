@@ -127,6 +127,61 @@ Records exercise name, sets, reps, duration, and date. Calories are estimated us
 
 Uses MediaPipe Pose Detection to track body landmarks in real time, count reps via joint angle analysis, and display a live skeleton overlay with form feedback. Supports Squats, Bicep Curls, Pushups, Lunges, and Jumping Jacks.
 
+> ⚠️ **This feature runs locally only.**
+> The Webcam AI Trainer uses OpenCV and MediaPipe with direct webcam access (`cv2.VideoCapture`). Cloud deployment platforms such as Render do not expose physical camera devices, so this module is demonstrated locally while all other modules are fully deployed online.
+
+### Why it is local-only
+
+Cloud servers (Render, Railway, Heroku) are headless Linux containers — they have no webcam, no screen, and no display driver. OpenCV's `VideoCapture(0)` and `imshow()` both require physical hardware. This is an architectural constraint, not a bug.
+
+### Running the Webcam Trainer locally
+
+**Step 1 — Clone and set up the backend**
+
+```bash
+git clone https://github.com/your-username/AI-Gym-Fitness-Assistant.git
+cd AI-Gym-Fitness-Assistant/backend
+python -m venv venv
+source venv/bin/activate        # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+pip install opencv-python mediapipe
+uvicorn app.main:app --reload
+```
+
+**Step 2 — Allow camera access**
+
+Make sure your system allows Python to access the webcam. On macOS, grant Terminal camera permission under System Settings → Privacy & Security → Camera.
+
+**Step 3 — Start a session**
+
+Navigate to the Webcam Trainer page in the app and select an exercise. A separate OpenCV window will open with your camera feed, skeleton overlay, rep count, joint angle, and form feedback displayed in real time.
+
+Press `Q` to end the session. Your rep count, duration, calories burned, and form score will be saved and reflected in your Dashboard, Reports, and Wellness Score.
+
+### Supported exercises
+
+| Exercise      | Joints tracked         |
+| ------------- | ---------------------- |
+| Squats        | Hip, knee, ankle       |
+| Bicep Curls   | Shoulder, elbow, wrist |
+| Pushups       | Shoulder, elbow, wrist |
+| Lunges        | Hip, knee, ankle       |
+| Jumping Jacks | Shoulder, hip, ankle   |
+
+### Form score scale
+
+| Score    | Rating            |
+| -------- | ----------------- |
+| 90 – 100 | Excellent         |
+| 80 – 89  | Good              |
+| 70 – 79  | Fair              |
+| 60 – 69  | Needs Improvement |
+| 50 – 59  | Poor              |
+
+### Note for Evaluators
+
+The Webcam AI Trainer is intentionally kept as a local module because it requires direct access to hardware devices (camera and display). Cloud platforms such as Render do not provide access to physical webcam devices. All other modules are fully deployed and accessible online.
+
 ### Pose Analyzer
 
 Scores exercise quality from webcam sessions on a 50–100 scale. Scores feed into the Wellness Score and Reports modules.
@@ -269,7 +324,7 @@ Analytics   (scores, achievements, streaks)
 ### Clone
 
 ```bash
-git clone https://github.com/your-username/AI-Gym-Fitness-Assistant.git
+git clone https://github.com/dodiyariya6/ai-gym-fitness-assistant
 cd AI-Gym-Fitness-Assistant
 ```
 
