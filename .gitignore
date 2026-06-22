@@ -39,3 +39,8 @@ yarn-error.log*
 
 .DS_Store
 Thumbs.db
+
+# ======================
+# Other files
+# ======================
+project_audit.txt

@@ -133,25 +133,27 @@ def calculate_targets(
         sleep_base = min(sleep_base + 0.5, 9.0)
 
     sleep_goal = round(sleep_base, 1)
+
     step_base = {
-        "sedentary": 6_000,
-        "light": 8_000,
-        "moderate": 10_000,
-        "active": 12_000,
-        "very_active": 15_000,
-    }.get(act_key, 8_000)
+        "sedentary": 5_000,
+        "light": 6_500,
+        "moderate": 8_000,
+        "active": 10_000,
+        "very_active": 12_000,
+    }.get(act_key, 6_000)
 
     if any(
         g in goals_lower
         for g in ["athletic performance", "endurance training", "improve stamina"]
     ):
-        step_base = int(step_base * 1.2)
+        step_base = int(step_base * 1.15)
     if any(g in goals_lower for g in ["weight loss", "fat loss"]):
-        step_base = max(step_base, 10_000)
+        step_base = max(step_base, 7_500)
     if "general fitness" in goals_lower:
-        step_base = max(step_base, 8_000)
+        step_base = max(step_base, 6_000)
 
-    step_goal = min(step_base, 20_000)
+    step_goal = min(step_base, 15_000)
+
     calorie_adjustment = 0
     if any(g in goals_lower for g in ["weight loss"]):
         calorie_adjustment = -400  # moderate deficit

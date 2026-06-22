@@ -31,6 +31,7 @@ Habits page
 ==================================================
 */
 import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 
 import { motion } from "framer-motion";
 
@@ -363,6 +364,8 @@ function HistoryEntry({ habit, index }) {
 ================================================ */
 
 export default function Habit() {
+  const location = useLocation();
+
   const [formData, setFormData] = useState({
     water_intake: "",
     sleep_hours: "",
@@ -394,9 +397,35 @@ export default function Habit() {
     }
   };
 
+  /* ================================================
+     ISSUE 2 FIX — Weekly tracker grid disappears on navigation.
+
+     Root cause:
+     The previous useEffect used [location.pathname] as its dependency.
+     React Router remounts this component fresh on every navigation to
+     /habits, which means the component starts with an empty `history`
+     state ([]).  The matrix renders immediately with that empty state
+     and shows hollow circles.  The useEffect then fires — but because
+     React compares the *previous* pathname (undefined on first mount)
+     with the current one, the effect does run on mount.  The real
+     failure mode is a subtle race: if the user navigates away before
+     loadHistory() resolves and then returns, the stale empty state is
+     painted first.  On some navigation patterns (e.g. same-path pushes
+     or layout-level keep-alive wrappers) the effect simply does not
+     re-fire because the pathname hasn't changed.
+
+     Fix:
+     Replace [location.pathname] with [] so loadHistory() is guaranteed
+     to run exactly once on every fresh mount of this component,
+     regardless of how React Router handles the navigation.  The
+     component is always unmounted when the user leaves /habits (React
+     Router's default behaviour with no keep-alive), so [] is sufficient
+     and correct — it fires on mount and never needs to re-fire due to
+     a pathname change within the same mount.
+  ================================================ */
   useEffect(() => {
     loadHistory();
-  }, []);
+  }, []); // ← FIX: was [location.pathname] — see comment above
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;

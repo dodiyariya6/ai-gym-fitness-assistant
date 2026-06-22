@@ -553,7 +553,9 @@ export default function Profile() {
                     <Flame size={18} />
                   </span>
                   <div>
-                    <p className="profile-target-label">Calorie Goal</p>
+                    <p className="profile-target-label">
+                      Daily Calorie Requirement (TDEE)
+                    </p>
                     <p className="profile-target-value">
                       {targets.calorie_goal?.toLocaleString()} kcal / day
                     </p>

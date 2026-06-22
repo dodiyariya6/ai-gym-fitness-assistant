@@ -1,939 +1,415 @@
 # AI Gym & Fitness Assistant
 
-## AI-Powered Fitness Product Prototype
+> AI-powered full-stack fitness platform that combines workout tracking, computer vision exercise analysis, personalized nutrition planning, habit monitoring, and intelligent fitness assistance into one unified ecosystem.
 
-AI Gym & Fitness Assistant is a full-stack intelligent fitness management platform developed to provide users with a centralized ecosystem for monitoring, analyzing, and improving their overall health and fitness journey.
-
-The application combines Artificial Intelligence, Computer Vision, Data Analytics, Habit Tracking, Nutritional Planning, and Interactive Fitness Assistance into a single unified platform.
-
-Traditional fitness applications often require users to switch between multiple applications to manage workouts, monitor habits, calculate calories, generate diet plans, and analyze progress. This project addresses that problem by integrating all essential fitness functionalities into one AI-powered environment.
-
-The system not only records user activities but also interprets user behavior and generates intelligent recommendations to help users achieve their fitness goals in a consistent and sustainable manner.
-
-This project was developed as a B.Tech Artificial Intelligence and Machine Learning Major Project.
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)
+![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)
+![Google Gemini](https://img.shields.io/badge/Gemini_AI-4285F4?style=for-the-badge&logo=google&logoColor=white)
+![MediaPipe](https://img.shields.io/badge/MediaPipe-00897B?style=for-the-badge&logo=google&logoColor=white)
 
 ---
 
-# Project Overview
+## Features
 
-AI Gym & Fitness Assistant acts as an intelligent virtual fitness companion that assists users throughout their entire fitness journey.
-
-The system enables users to:
-
-- Create and manage fitness profiles
-- Track workouts
-- Monitor daily habits
-- Generate personalized meal plans
-- Analyze exercise performance
-- View fitness analytics
-- Monitor wellness scores
-- Track achievements and consistency
-- Discover nearby gyms
-- Interact with an AI fitness assistant
-
-The application follows a Single Source of Truth architecture where all modules consume centralized profile and activity data.
-
-The primary goal is to provide users with one unified platform instead of requiring multiple applications for different fitness-related tasks.
+| Feature             | Description                                                            |
+| ------------------- | ---------------------------------------------------------------------- |
+| JWT Authentication  | Secure registration, login, and protected route access                 |
+| AI Webcam Trainer   | Real-time pose detection and rep counting via MediaPipe                |
+| Workout Tracker     | Manual exercise logging with automatic MET-based calorie calculation   |
+| AI Dietician        | Personalized meal plans via Gemini, based on BMI, BMR, and TDEE        |
+| Habit Tracker       | Daily logging of water, sleep, steps, and workout completion           |
+| Wellness Score      | Unified health score derived from habits, form data, and consistency   |
+| Consistency Tracker | Streak tracking, weekly and monthly discipline metrics                 |
+| Achievement System  | Auto-unlocked milestone badges to gamify progress                      |
+| Reports             | Performance summaries with Gemini-generated actionable suggestions     |
+| Gym Finder          | Nearby gym discovery via OpenStreetMap and the Overpass API            |
+| AI Fitness Chatbot  | Gemini-powered virtual gym buddy for personalized guidance             |
+| Dashboard           | Live analytics and trend indicators sourced entirely from the database |
 
 ---
 
-# Problem Statement
+## Tech Stack
 
-Most existing fitness applications suffer from several limitations.
+### Frontend
 
-Users often need separate applications for:
+| Technology       | Role                                        |
+| ---------------- | ------------------------------------------- |
+| React + Vite     | UI framework and build tooling              |
+| React Router DOM | Client-side navigation and protected routes |
+| Recharts         | Data visualization and analytics charts     |
+| CSS              | Styling and responsive layout               |
 
-- Workout tracking
-- Diet planning
-- Habit monitoring
-- Progress analysis
-- Fitness recommendations
+### Backend
 
-Many applications provide generic recommendations instead of personalized suggestions.
+| Technology | Role                                |
+| ---------- | ----------------------------------- |
+| FastAPI    | REST API development                |
+| SQLAlchemy | ORM and database management         |
+| Python     | Core business logic                 |
+| JWT        | Authentication and session security |
 
-Workout form analysis is often unavailable or hidden behind premium subscriptions.
+### Database
 
-Habit consistency tracking is simplistic and lacks meaningful insights.
+| Technology      | Role                                                      |
+| --------------- | --------------------------------------------------------- |
+| Neon PostgreSQL | Cloud-hosted relational database — single source of truth |
 
-Users are unable to visualize their overall wellness in a consolidated manner.
+### AI Services
 
-This project aims to solve these issues by creating an intelligent AI-powered fitness ecosystem.
-
----
-
-# Project Objectives
-
-The main objectives of AI Gym & Fitness Assistant are:
-
-1. Develop an AI-powered fitness management platform.
-
-2. Provide personalized nutritional recommendations.
-
-3. Monitor daily habits.
-
-4. Track workout sessions.
-
-5. Analyze exercise performance.
-
-6. Generate fitness reports.
-
-7. Implement webcam-based exercise analysis.
-
-8. Create an interactive AI fitness assistant.
-
-9. Build personalized fitness targets.
-
-10. Generate visual analytics.
-
-11. Track consistency and achievements.
-
-12. Discover nearby fitness centers.
-
-13. Centralize all fitness activities into one ecosystem.
+| Technology        | Role                                           |
+| ----------------- | ---------------------------------------------- |
+| Google Gemini API | Meal planning, fitness chatbot, AI suggestions |
+| MediaPipe         | Human pose estimation and exercise analysis    |
 
 ---
 
-# System Architecture
+## System Architecture
 
-The application follows a multi-layer architecture.
-
-```text
-Frontend (React)
-
-↓
-
-Backend API (FastAPI)
-
-↓
-
-Database (Neon PostgreSQL)
-
-↓
-
-Artificial Intelligence Services
-
-↓
-
-MediaPipe Computer Vision
 ```
-
-The architecture separates presentation, business logic, database operations, and AI services to improve maintainability and scalability.
-
----
-
-# Technology Stack
-
-## Frontend
-
-Technologies:
-
-- React (Vite)
-- JSX
-- CSS
-- React Router DOM
-- Recharts
-
-Responsibilities:
-
-- User Interface
-- Navigation
-- Dashboard rendering
-- API communication
-- Data visualization
-
----
-
-## Backend
-
-Technologies:
-
-- FastAPI
-- Python
-- SQLAlchemy
-
-Responsibilities:
-
-- Business logic
-- API development
-- Authentication
-- Validation
-- Database management
-
----
-
-## Database
-
-Technology:
-
-- Neon PostgreSQL
-
-Responsibilities:
-
-- Store users
-- Store profiles
-- Store workouts
-- Store habits
-- Store meal plans
-- Store reports
-
----
-
-## Artificial Intelligence
-
-Technologies:
-
-- Google Gemini API
-- MediaPipe
-
-Responsibilities:
-
-- Meal plan generation
-- Fitness chatbot
-- Personalized suggestions
-- Exercise analysis
-
----
-
-## Authentication
-
-Technology:
-
-- JWT Authentication
-
-Responsibilities:
-
-- Registration
-- Login
-- Logout
-- Protected routes
-- Session security
-
----
-
-# Core Modules
-
-## 1. User Authentication System
-
-This module provides secure user access.
-
-Features:
-
-- User Registration
-- User Login
-- Password Hashing
-- JWT Token Generation
-- Logout
-- Protected Routes
-
-Workflow:
-
-```text
-Register
-
-↓
-
-Validate User
-
-↓
-
-Hash Password
-
-↓
-
-Store User
-
-↓
-
-Login
-
-↓
-
-Generate JWT Token
-
-↓
-
-Access Protected Pages
-```
-
-Benefits:
-
-- Secure access
-- Personalized experience
-- User isolation
-
----
-
-## 2. Dashboard
-
-The Dashboard provides a real-time overview of user fitness data.
-
-Features:
-
-- Dynamic analytics
-- Weekly progress tracking
-- Trend indicators
-- Real-time updates
-
-The dashboard never uses hardcoded values.
-
-All data is fetched directly from the database.
-
-Metrics displayed:
-
-- Total workouts
-- Calories burned
-- Weekly goals
-- Health score
-- Habit trends
-
----
-
-## 3. AI User Profile & Settings
-
-This module acts as the Single Source of Truth for the entire application.
-
-Sections:
-
-### Personal Information
-
-- Name
-- Email
-- Age
-- Gender
-- Height
-- Weight
-
-### Location
-
-- City
-- State
-- Country
-
-### Fitness Goals
-
-Users can select up to three goals.
-
-Examples:
-
-- Weight Loss
-- Muscle Gain
-- Fat Loss
-- Body Recomposition
-- Strength Training
-- Endurance Training
-- Athletic Performance
-- Healthy Lifestyle
-
-### Activity Level
-
-Options:
-
-- Sedentary
-- Light
-- Moderate
-- Active
-- Very Active
-
-### Personalized Daily Targets
-
-Generated targets:
-
-- Water Goal
-- Sleep Goal
-- Step Goal
-- Calorie Goal
-
-The Profile module provides data to:
-
-- Dietician
-- Habits
-- Reports
-- Gym Finder
-
----
-
-## 4. AI Dietician & Calorie Coach
-
-The AI Dietician provides personalized nutritional recommendations.
-
-Inputs:
-
-- Age
-- Gender
-- Height
-- Weight
-- Activity Level
-- Fitness Goals
-
-Calculations:
-
-### BMI
-
-Body Mass Index
-
-```text
-BMI = Weight ÷ Height²
-```
-
-### BMR
-
-Basal Metabolic Rate
-
-Calculated using gender-specific formulas.
-
-### TDEE
-
-Total Daily Energy Expenditure
-
-```text
-TDEE = BMR × Activity Multiplier
-```
-
-### Macronutrient Distribution
-
-The application calculates:
-
-- Protein
-- Carbohydrates
-- Fats
-
-Meal plans generated:
-
-- Breakfast
-- Mid-Morning Snack
-- Lunch
-- Evening Snack
-- Dinner
-
-The application also generates grocery lists.
-
-Benefits:
-
-- Personalized nutrition
-- Balanced diet plans
-- Automated recommendations
-
----
-
-## 5. Workout Tracker
-
-The Workout module records exercise sessions.
-
-Inputs:
-
-- Exercise Name
-- Sets
-- Repetitions
-- Duration
-
-Outputs:
-
-- Calories Burned
-- Workout History
-
-Calories are automatically calculated.
-
-Formula:
-
-```text
-Calories Burned
-
-=
-
-MET × 3.5 × Body Weight × Duration
-
-÷ 200
-```
-
-Benefits:
-
-- Accurate calorie estimation
-- Eliminates manual calculations
-
----
-
-## 6. AI Webcam Trainer
-
-This is one of the primary AI components of the project.
-
-Technology:
-
-MediaPipe Pose Detection
-
-Supported exercises:
-
-- Squats
-- Bicep Curls
-- Pushups
-- Lunges
-- Jumping Jacks
-
-Features:
-
-- Skeleton visualization
-- Rep counter
-- Angle detection
-- Exercise feedback
-- Form analysis
-
-Workflow:
-
-```text
-Start Webcam
-
-↓
-
-Detect Human Pose
-
-↓
-
-Track Landmarks
-
-↓
-
-Count Repetitions
-
-↓
-
-Generate Metrics
-
-↓
-
-Save Workout
+User
+  |
+  v
+React Frontend  (Vite, JSX, Recharts)
+  |
+  v
+FastAPI Backend  (Python, SQLAlchemy)
+  |
+  v
+Neon PostgreSQL  (Single Source of Truth)
+  |
+  v
+AI Services
+  |-- Google Gemini API   Meal Plans, Chatbot, Suggestions
+  |-- MediaPipe           Real-Time Pose Detection
+  |-- MET Formula Engine  Calorie Calculation
 ```
 
 ---
 
-## 7. Pose-to-Performance Analyzer
+## Modules
 
-This module analyzes exercise quality.
+### Authentication
 
-Outputs:
+Handles user registration, login, and access control. Passwords are hashed with Bcrypt. JWT tokens secure every protected route across the application.
 
-- Form Score
-- Weekly Reports
-- Performance Analytics
+---
 
-Score Range:
+### Dashboard
 
-```text
-50 – 100
+Displays a real-time overview of total workouts, calories burned, weekly goal progress, health score, and habit trends. All values are fetched live from the database — no hardcoded data.
+
+---
+
+### Profile
+
+The single source of truth for personalization. Stores personal info, location, fitness goals, and activity level. Generates daily targets for water, sleep, steps, and calories. Feeds data directly into the Dietician, Habit Tracker, Reports, and Gym Finder modules.
+
+---
+
+### AI Dietician
+
+Calculates BMI, BMR (Mifflin-St Jeor), and TDEE from profile data, then calls Google Gemini to generate a personalized five-meal plan with macronutrient targets and a grocery list.
+
+---
+
+### Workout Tracker
+
+Records exercise name, sets, reps, duration, and date. Calories are automatically estimated using the MET formula against the user's body weight. Full workout history is maintained per user.
+
+---
+
+### AI Webcam Trainer
+
+The core computer vision module. Uses MediaPipe Pose Detection to track body landmarks in real time, count repetitions via joint angle analysis, and display a live skeleton overlay with form feedback. Supports Squats, Bicep Curls, Pushups, Lunges, and Jumping Jacks.
+
+---
+
+### Pose Analyzer
+
+Scores exercise quality from webcam sessions on a 50–100 scale. Scores feed into the Wellness Score and Reports modules.
+
+| Range    | Category          |
+| -------- | ----------------- |
+| 90 – 100 | Excellent         |
+| 80 – 89  | Good              |
+| 70 – 79  | Fair              |
+| 60 – 69  | Needs Improvement |
+| 50 – 59  | Poor              |
+
+---
+
+### Habit Tracker
+
+Logs daily water intake, sleep hours, steps, and workout completion. Prevents duplicate entries, allows past-date logging, and restricts future dates. Displays a weekly habit matrix and full history timeline.
+
+---
+
+### Virtual Gym Buddy
+
+A Gemini-powered fitness chatbot. Responds to questions about workouts, diet, goals, and healthy habits with personalized, context-aware answers.
+
+---
+
+### Reports
+
+Aggregates health score, form score, average sleep and water intake, step totals, and workout statistics into a weekly summary. Gemini generates actionable improvement suggestions from the user's data.
+
+---
+
+### Wellness Score
+
+Computes a single unified health score from water intake, sleep, steps, workout completion, form score, and habit consistency. Gives users a quick, honest picture of their overall health.
+
+---
+
+### Consistency Tracker
+
+Tracks current streak, longest streak, total successful days, and weekly and monthly consistency percentages. Designed to build long-term discipline through visible progress.
+
+---
+
+### Achievement System
+
+Automatically awards badges when users hit milestones: First Workout, Hydration Hero, Sleep Champion, Weekly Warrior, Goal Crusher, Habit Builder, Step Master, and AI Explorer.
+
+---
+
+### Gym Finder
+
+Detects the user's location from their profile and discovers nearby fitness centers using OpenStreetMap, Nominatim, and the Overpass API. Provides an adjustable search radius and direct Google Maps directions.
+
+---
+
+## Project Workflow
+
 ```
-
-Categories:
-
-```text
-90 – 100 : Excellent
-
-80 – 89 : Good
-
-70 – 79 : Fair
-
-60 – 69 : Needs Improvement
-
-50 – 59 : Poor
-```
-
----
-
-## 8. AI Habit Tracker
-
-The Habit Tracker monitors daily wellness habits.
-
-Parameters:
-
-- Water Intake
-- Sleep Hours
-- Steps
-- Workout Completion
-
-Features:
-
-- Daily logs
-- Edit entries
-- Duplicate prevention
-- Weekly matrix
-- History timeline
-
-Users can log previous dates if they forget to record their activities.
-
-Future dates are restricted.
-
----
-
-## 9. AI Wellness Score
-
-This module generates a unified health score.
-
-Factors used:
-
-- Water intake
-- Sleep hours
-- Steps
-- Workout completion
-- Form score
-- Consistency
-
-Benefits:
-
-- Quick health overview
-- Easy progress monitoring
-
----
-
-## 10. AI Consistency Tracker
-
-This gamification module measures user discipline.
-
-Metrics:
-
-- Current streak
-- Longest streak
-- Weekly consistency
-- Monthly consistency
-- Successful days
-
-Benefits:
-
-- Builds long-term habits
-- Encourages consistency
-
----
-
-## 11. AI Achievement System
-
-Achievements are automatically unlocked.
-
-Examples:
-
-- First Workout
-- Hydration Hero
-- Sleep Champion
-- Weekly Warrior
-- Goal Crusher
-- Habit Builder
-- Step Master
-- AI Explorer
-
-Benefits:
-
-- Increases motivation
-- Makes fitness engaging
-
----
-
-## 12. Virtual Gym Buddy
-
-This module provides AI-powered interaction.
-
-Features:
-
-- Gemini chatbot
-- Personalized responses
-- Fitness guidance
-
-Users can ask questions related to:
-
-- Workouts
-- Diet
-- Fitness goals
-- Healthy habits
-
----
-
-## 13. Reports System
-
-The Reports module summarizes overall user performance.
-
-Metrics:
-
-- Health Score
-- Form Score
-- Average Sleep
-- Average Water Intake
-- Total Steps
-- Workout Statistics
-
-AI suggestions are also generated.
-
-Examples:
-
-- Increase hydration
-- Improve sleep schedule
-- Maintain consistency
-
-Benefits:
-
-- Actionable insights
-- Better decision making
-
----
-
-## 14. Gym Finder
-
-Gym Finder helps users discover nearby fitness centers.
-
-Features:
-
-- Current location detection
-- Radius selection
-- Nearby gyms
-- Directions
-
-Technologies:
-
-- OpenStreetMap
-- Nominatim
-- Overpass API
-
-Users can open directions directly in Google Maps.
-
----
-
-# Database Design
-
-Primary entities:
-
-Users
-
-```text
-id
-
-username
-
-email
-
-password
-
-created_at
-```
-
-Profiles
-
-```text
-id
-
-user_id
-
-age
-
-gender
-
-height
-
-weight
-
-city
-
-state
-
-country
-
-fitness_goals
-
-activity_level
-
-water_goal
-
-sleep_goal
-
-step_goal
-
-calorie_goal
-```
-
-Workouts
-
-```text
-id
-
-user_id
-
-exercise_name
-
-sets
-
-reps
-
-duration
-
-calories_burned
-
-form_score
-
-workout_date
-```
-
-Habits
-
-```text
-id
-
-user_id
-
-water_intake
-
-sleep_hours
-
-steps
-
-workout_done
-
-date
-```
-
-Meal Plans
-
-```text
-id
-
-user_id
-
-meal_plan
-
-grocery_list
-
-created_at
+Register / Login
+  |
+  v
+Complete Profile  (goals, activity level, location)
+  |
+  v
+Daily Activity
+  |-- Log Habits    (water, sleep, steps)
+  |-- Log Workout   (manual entry)
+  |-- Webcam        (AI pose detection + rep counting)
+  |
+  v
+PostgreSQL  (all data persisted)
+  |
+  v
+Dashboard   (live metrics + trends)
+  |
+  v
+Reports     (weekly summary + AI suggestions)
+  |
+  v
+Analytics   (scores, achievements, streaks)
 ```
 
 ---
 
-# Data Flow
+## Project Statistics
 
-The application follows this workflow:
+| Metric              | Value                  |
+| ------------------- | ---------------------- |
+| Total Modules       | 14                     |
+| Application Pages   | 10+                    |
+| AI Integrations     | 3                      |
+| Supported Exercises | 5                      |
+| Authentication      | JWT                    |
+| Database            | Neon PostgreSQL        |
+| Deployment Stack    | Vercel + Render + Neon |
 
-```text
-Profile
+---
 
-↓
+## Screenshots
 
-Habits
+**Dashboard**
 
-↓
+![Dashboard](screenshots/dashboard.png)
 
-Workout
+**AI Webcam Trainer**
 
-↓
+![Webcam Trainer](screenshots/webcam.png)
 
-Dashboard
+**Workout History**
 
-↓
+![Workout History](screenshots/workout-history.png)
 
-Reports
+**AI Dietician**
 
-↓
+![Dietician](screenshots/dietician.png)
 
-Analytics
+**Habit Tracker**
+
+![Habit Tracker](screenshots/habits.png)
+
+**Reports**
+
+![Reports](screenshots/reports.png)
+
+---
+
+## Installation
+
+### Prerequisites
+
+- Node.js 18+
+- Python 3.10+
+- Neon PostgreSQL connection string
+- Google Gemini API key
+
+### Clone
+
+```bash
+git clone https://github.com/your-username/AI-Gym-Fitness-Assistant.git
+cd AI-Gym-Fitness-Assistant
 ```
 
-The database acts as the Single Source of Truth.
+### Backend
 
-No fake analytics are used.
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate        # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+```
 
-No hardcoded values are used.
+API available at `http://127.0.0.1:8000`
 
-All modules consume real data.
+### Frontend
 
----
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-# Security Features
-
-Implemented security measures:
-
-- Password hashing
-- JWT authentication
-- Protected routes
-- Input validation
-- Database constraints
-
-Benefits:
-
-- Secure user access
-- Data protection
-- Session security
+App available at `http://localhost:5173`
 
 ---
 
-# User Interface Design
+## Environment Variables
 
-Design principles:
+**Backend** — `backend/.env`
 
-- Minimalistic
-- Modern
-- Responsive
-- Professional
+```env
+DATABASE_URL=postgresql://user:password@host/dbname
+SECRET_KEY=your_jwt_secret_key
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+GEMINI_API_KEY=your_google_gemini_api_key
+```
 
-UI features:
+**Frontend** — `frontend/.env`
 
-- Rounded cards
-- Interactive charts
-- Progress indicators
-- Dynamic statistics
-- Responsive layouts
-
-The interface was designed to provide a clean and user-friendly experience.
-
----
-
-# Challenges Faced
-
-Major challenges encountered:
-
-1. Integrating multiple modules.
-
-2. Synchronizing database operations.
-
-3. Integrating MediaPipe.
-
-4. Eliminating hardcoded analytics.
-
-5. Handling duplicate habit entries.
-
-6. Integrating Gemini AI.
-
-7. Building lightweight scoring systems.
-
-8. Synchronizing Dashboard and Reports.
-
-9. Maintaining consistency across all modules.
+```env
+VITE_API_BASE_URL=http://127.0.0.1:8000
+```
 
 ---
 
-# Outcomes Achieved
+## Folder Structure
 
-The project successfully:
-
-- Centralized fitness management
-- Integrated AI services
-- Implemented computer vision
-- Automated meal planning
-- Automated calorie calculations
-- Generated analytics
-- Created personalized recommendations
-- Built consistency tracking
-- Implemented achievement systems
+```
+AI-Gym-Fitness-Assistant/
+|
+|-- backend/
+|   |-- app/
+|   |   |-- models/
+|   |   |   |-- user.py
+|   |   |   |-- workout.py
+|   |   |   |-- habit.py
+|   |   |   |-- profile.py
+|   |   |   |-- meal_plan.py
+|   |   |
+|   |   |-- routers/
+|   |   |   |-- auth.py
+|   |   |   |-- workout.py
+|   |   |   |-- habit.py
+|   |   |   |-- profile.py
+|   |   |   |-- pose.py
+|   |   |   |-- dietician.py
+|   |   |   |-- reports.py
+|   |   |
+|   |   |-- services/
+|   |   |   |-- auth_service.py
+|   |   |   |-- workout_service.py
+|   |   |   |-- habit_service.py
+|   |   |   |-- pose_service.py
+|   |   |   |-- squat_service.py
+|   |   |   |-- curl_service.py
+|   |   |   |-- pushup_service.py
+|   |   |   |-- lunge_service.py
+|   |   |   |-- jumping_jack_service.py
+|   |   |
+|   |   |-- schemas/
+|   |   |   |-- workout.py
+|   |   |   |-- habit.py
+|   |   |   |-- profile.py
+|   |   |
+|   |   |-- database.py
+|   |   |-- main.py
+|   |
+|   |-- requirements.txt
+|
+|-- frontend/
+|   |-- src/
+|   |   |-- pages/
+|   |   |   |-- Dashboard.jsx
+|   |   |   |-- Workout.jsx
+|   |   |   |-- Webcam.jsx
+|   |   |   |-- Habits.jsx
+|   |   |   |-- Dietician.jsx
+|   |   |   |-- Profile.jsx
+|   |   |   |-- Reports.jsx
+|   |   |   |-- GymFinder.jsx
+|   |   |   |-- Chatbot.jsx
+|   |   |   |-- Login.jsx
+|   |   |   |-- Register.jsx
+|   |   |
+|   |   |-- components/
+|   |   |-- layouts/
+|   |   |-- services/
+|   |   |   |-- api.js
+|   |   |   |-- workoutService.js
+|   |   |   |-- habitService.js
+|   |   |   |-- profileService.js
+|   |   |
+|   |   |-- styles/
+|   |
+|   |-- index.html
+|   |-- vite.config.js
+|   |-- package.json
+|
+|-- README.md
+```
 
 ---
 
-# Future Scope
+## Future Improvements
 
-Potential future enhancements include:
-
-- Mobile application development
-- Wearable device integration
-- Voice assistant integration
-- Advanced posture analysis
-- Machine learning-based fitness prediction
-- Cloud deployment
+- React Native mobile application for iOS and Android
+- Wearable device integration for passive health tracking
+- Voice assistant for hands-free workout guidance
+- ML-based fitness prediction and goal timeline estimation
+- Advanced posture analysis with injury risk detection
 
 ---
 
-# Conclusion
+## Contributors
 
-AI Gym & Fitness Assistant is an AI-powered full-stack fitness product prototype that integrates nutrition planning, workout tracking, habit monitoring, computer vision, analytics, personalized recommendations, and intelligent assistance into one unified ecosystem.
+| Name        | Role                                                 |
+| ----------- | ---------------------------------------------------- |
+| [Your Name] | Full-Stack Development, AI Integration, Project Lead |
 
-The project demonstrates the practical application of Artificial Intelligence in healthcare and fitness domains by combining AI, Computer Vision, Data Analytics, and Full-Stack Web Development.
+---
 
-The application successfully eliminates the need for multiple fitness applications and provides users with a centralized environment to manage their entire fitness journey.
+## License
 
-AI Gym & Fitness Assistant serves as a real-world example of integrating modern technologies into an intelligent problem-solving system suitable for both academic and professional environments.
+Developed as a B.Tech Major Project for academic submission. For usage or collaboration inquiries, contact the contributor directly.

@@ -379,10 +379,18 @@ export default function Workout() {
     setPendingWorkout(null);
   };
 
-  const totalCalories = history.reduce(
-    (sum, item) => sum + Number(item.calories_burned || 0),
-    0,
-  );
+  // ISSUE 3 FIX: calories shown in the hero and stat card must reflect only
+  // the latest workout date, not the lifetime total.
+  // Find the most recent workout_date from history (history is ordered desc
+  // by created_at so history[0] is the newest record).
+  const latestWorkoutDate = history.length > 0 ? history[0].workout_date : null;
+
+  // Sum calories only for workouts on that latest date.
+  const latestDayCalories = latestWorkoutDate
+    ? history
+        .filter((item) => item.workout_date === latestWorkoutDate)
+        .reduce((sum, item) => sum + Number(item.calories_burned || 0), 0)
+    : 0;
 
   const workoutsTrend = weeklyTrend(history, () => 1);
   const caloriesTrend = weeklyTrend(history, (item) =>
@@ -433,9 +441,10 @@ export default function Workout() {
                   {history.length} Total Workouts
                 </span>
 
+                {/* ISSUE 3 FIX: show calories for latest workout date only */}
                 <span className="hero-pill">
                   <Flame size={14} />
-                  {totalCalories} kcal Burned
+                  {latestDayCalories} kcal Burned Today
                 </span>
 
                 <span className="hero-pill">
@@ -477,10 +486,11 @@ export default function Workout() {
             index={0}
           />
 
+          {/* ISSUE 3 FIX: label and value show latest-day calories, not lifetime */}
           <StatCard
             icon={Flame}
-            label="Total Calories"
-            value={totalCalories}
+            label="Calories Burned Today"
+            value={latestDayCalories}
             trend={caloriesTrend.delta}
             accent="var(--warning-500, #f59e0b)"
             soft="rgba(245, 158, 11, 0.12)"

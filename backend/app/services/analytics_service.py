@@ -36,7 +36,7 @@ AI Wellness Score
 """
 
 from datetime import date, timedelta
-from sqlalchemy import func, desc
+from sqlalchemy import func, desc, cast, Date
 
 from app.models.workout import Workout
 from app.models.habit import Habit
@@ -94,12 +94,29 @@ def get_user_analytics(db, user_id):
     today = date.today()
     week_start = today - timedelta(days=6)  # rolling 7-day window
 
+    # POSTGRES CAST FIX:
+    # Workout.workout_date and Habit.date are stored as character varying
+    # (VARCHAR) in the PostgreSQL database.  Comparing a VARCHAR column
+    # against a Python date object without an explicit cast causes PostgreSQL
+    # to raise:
+    #   "operator does not exist: character varying >= date"
+    # because PostgreSQL has no implicit coercion between the two types.
+    #
+    # Fix: wrap every date-range filter on these two columns with
+    # cast(<column>, Date), which tells PostgreSQL to interpret the stored
+    # string as a DATE value before performing the comparison.  The Python
+    # date objects on the right-hand side are then correctly compared as dates.
+    #
+    # str() conversion is also applied to week_start / today on the RHS so the
+    # bound parameter is always sent as an ISO-8601 string — the format that
+    # PostgreSQL's DATE cast expects — regardless of SQLAlchemy dialect.
+
     days_logged_this_week = (
         db.query(func.count(func.distinct(Habit.date)))
         .filter(
             Habit.user_id == user_id,
-            Habit.date >= str(week_start),
-            Habit.date <= str(today),
+            cast(Habit.date, Date) >= week_start,
+            cast(Habit.date, Date) <= today,
         )
         .scalar()
     ) or 0
@@ -182,21 +199,79 @@ def get_user_analytics(db, user_id):
         "workout_completion_rate": completion_trend,
     }
 
+    # ISSUE 2 FIX: filter by the latest 7-day window instead of using .limit(7)
+    # which previously returned the first 7 workout dates ever recorded.
+    # Now always shows the freshest 7 days relative to today.
+    # cast(Workout.workout_date, Date) applied — see POSTGRES CAST FIX above.
     chart_rows = (
         db.query(
             Workout.workout_date,
             func.count(Workout.id).label("workouts"),
         )
-        .filter(Workout.user_id == user_id)
+        .filter(
+            Workout.user_id == user_id,
+            cast(Workout.workout_date, Date) >= week_start,
+            cast(Workout.workout_date, Date) <= today,
+        )
         .group_by(Workout.workout_date)
         .order_by(Workout.workout_date)
-        .limit(7)
         .all()
     )
 
     workout_trend = [
         {"day": str(row.workout_date), "workouts": row.workouts} for row in chart_rows
     ]
+
+    # DATA SYNC FIX: 7-day rolling averages for Dashboard KPI cards and hero pills.
+    # cast(Habit.date, Date) applied — see POSTGRES CAST FIX above.
+    # Divides by the count of days actually logged in the window, not by 7,
+    # so unlogged days do not deflate the averages.
+    recent_habits_7d = (
+        db.query(Habit)
+        .filter(
+            Habit.user_id == user_id,
+            cast(Habit.date, Date) >= week_start,
+            cast(Habit.date, Date) <= today,
+        )
+        .all()
+    )
+
+    habit_count_7d = len(recent_habits_7d)
+
+    # Avg Daily Steps — last 7 calendar days, divided by days actually logged.
+    # Returns 0 only when there are genuinely no habit records at all.
+    avg_daily_steps_7d = (
+        round(sum(h.steps for h in recent_habits_7d) / habit_count_7d)
+        if habit_count_7d > 0
+        else 0
+    )
+
+    # Avg Daily Water — last 7 calendar days, divided by days actually logged.
+    # Returns 0 only when there are genuinely no habit records at all.
+    avg_daily_water_7d = (
+        round(
+            sum(float(h.water_intake) for h in recent_habits_7d) / habit_count_7d,
+            1,
+        )
+        if habit_count_7d > 0
+        else 0
+    )
+
+    # Avg Daily Sleep — last 7 calendar days, divided by days actually logged.
+    # Returns 0 only when there are genuinely no habit records at all.
+    avg_daily_sleep_7d = (
+        round(
+            sum(float(h.sleep_hours) for h in recent_habits_7d) / habit_count_7d,
+            2,
+        )
+        if habit_count_7d > 0
+        else 0
+    )
+
+    # Reports KPI: overall average steps across ALL habit logs — not capped to
+    # 7 days.  Divides total lifetime steps by total number of habit records,
+    # giving a stable long-term activity benchmark for the Reports page.
+    overall_avg_daily_steps = round(total_steps / habit_logs) if habit_logs > 0 else 0
 
     recent_workouts = (
         db.query(Workout)
@@ -251,10 +326,13 @@ def get_user_analytics(db, user_id):
     current_streak = 0
 
     if logged_dates:
-        check_date = date.today()
+        # logged_dates contains strings (VARCHAR) — compare against str(today)
+        # so the while-loop does not fail on type mismatch.
+        check_date = str(date.today())
         while check_date in logged_dates:
             current_streak += 1
-            check_date -= timedelta(days=1)
+            # Step back one calendar day as a string for consistent comparison.
+            check_date = str(date.fromisoformat(check_date) - timedelta(days=1))
 
     has_any_data = total_workouts > 0 or habit_logs > 0
 
@@ -297,6 +375,7 @@ def get_user_analytics(db, user_id):
             wellness_score += 4
 
         health_score = round(min(100, wellness_score))
+
     water_target = profile.water_goal if profile and profile.water_goal else 2.0
     sleep_target = profile.sleep_goal if profile and profile.sleep_goal else 7.0
     step_target = profile.step_goal if profile and profile.step_goal else 10_000
@@ -307,6 +386,7 @@ def get_user_analytics(db, user_id):
     goal_phrase = ""
     if profile and profile.fitness_goals:
         goal_phrase = f" for your {profile.fitness_goals[0].lower()} goal"
+
     suggestions = []
 
     if avg_water_f < water_target:
@@ -375,6 +455,13 @@ def get_user_analytics(db, user_id):
         "recent_activity": recent_activity,
         "ai_suggestions": suggestions,
         "current_streak": current_streak,
+        # Dashboard KPI cards and hero pills: 7-day rolling averages.
+        # Denominator = days actually logged in the window, not 7.
+        "avg_daily_steps_7d": avg_daily_steps_7d,
+        "avg_daily_water_7d": avg_daily_water_7d,
+        "avg_daily_sleep_7d": avg_daily_sleep_7d,
+        # Reports KPI: overall average across ALL habit logs (long-term view).
+        "overall_avg_daily_steps": overall_avg_daily_steps,
     }
 
 

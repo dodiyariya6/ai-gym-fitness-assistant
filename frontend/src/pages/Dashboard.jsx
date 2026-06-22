@@ -34,15 +34,15 @@ Dashboard page
 */
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import DashboardLayout from "../layouts/DashboardLayout";
 import WorkoutChart from "../components/charts/WorkoutChart";
 import { getAnalytics } from "../services/analyticsService";
-import { getProfile } from "../services/profileService"; // ← NEW
-import { getConsistency } from "../services/consistencyService"; // ← NEW
-import { getAchievements } from "../services/achievementService"; // ← NEW
-import ConsistencyTracker from "../components/dashboard/ConsistencyTracker"; // ← NEW
-import AchievementsPanel from "../components/dashboard/AchievementsPanel"; // ← NEW
+import { getProfile } from "../services/profileService";
+import { getConsistency } from "../services/consistencyService";
+import { getAchievements } from "../services/achievementService";
+import ConsistencyTracker from "../components/dashboard/ConsistencyTracker";
+import AchievementsPanel from "../components/dashboard/AchievementsPanel";
 import WellnessScoreWidget from "../components/common/WellnessScoreWidget";
 import {
   Dumbbell,
@@ -61,6 +61,7 @@ import {
   BookOpen,
   Flame,
   Timer,
+  Droplets,
 } from "lucide-react";
 import "../styles/dashboard.css";
 
@@ -211,21 +212,28 @@ function CircularProgress({ value }) {
 export default function Dashboard() {
   const navigate = useNavigate();
 
+  // BUG FIX: useLocation() lets us detect when the user navigates back to
+  // this route via client-side routing (e.g. clicking the sidebar link).
+  // React Router does NOT unmount/remount the component on revisit, so
+  // useEffect([]) only ran once — on the very first visit — and stale
+  // (or empty) analytics were shown on every subsequent visit.
+  const location = useLocation();
+
   const [analytics, setAnalytics] = useState(null);
   const [error, setError] = useState(false);
 
-  // ── NEW: Profile / Consistency / Achievements state ───────────────────────
-  // These are additive enrichments — failures here never block the core
-  // dashboard, they just hide the relevant section.
   const [profile, setProfile] = useState(null);
   const [consistency, setConsistency] = useState(null);
   const [achievements, setAchievements] = useState(null);
 
+  // BUG FIX: Include location.pathname (or location.key) in the dependency
+  // array so analytics re-fetch every time the Dashboard route is activated,
+  // not just on the initial mount.  This guarantees today's habit records
+  // (water, sleep, steps) are always reflected when the user returns here.
   useEffect(() => {
     fetchAnalytics();
-  }, []);
+  }, [location.pathname]);
 
-  // ── NEW: independent fetch for Profile-driven sections ────────────────────
   useEffect(() => {
     (async () => {
       try {
@@ -256,6 +264,12 @@ export default function Dashboard() {
   }, []);
 
   const fetchAnalytics = async () => {
+    // BUG FIX: Reset analytics to null before each fetch so the loading
+    // guard below prevents rendering stale or zero values while the new
+    // request is in flight.  Without this reset, revisiting the page would
+    // briefly display the previous (potentially zeroed) data.
+    setAnalytics(null);
+    setError(false);
     try {
       const data = await getAnalytics();
       setAnalytics(data);
@@ -273,6 +287,10 @@ export default function Dashboard() {
     );
   }
 
+  // BUG FIX: analytics === null means the fetch is still in progress.
+  // We must NOT fall through to the render below while loading because
+  // every `analytics.xyz ?? 0` expression would silently produce 0,
+  // making valid database values appear as zero to the user.
   if (!analytics) {
     return (
       <DashboardLayout>
@@ -297,16 +315,36 @@ export default function Dashboard() {
 
   const dc = analytics.daily_comparison ?? {};
 
-  // ── NEW: first-name extracted from Profile, never hardcoded ───────────────
   const displayName = profile?.name?.trim()
     ? profile.name.trim().split(/\s+/)[0]
     : "";
 
+  // BUG FIX: Read the correct 7-day rolling average fields from the backend.
+  // The original code used ?? 0 which masked nulls returned when habit logs
+  // were present but the field name didn't match (e.g. a typo or old cached
+  // response missing avg_daily_steps_7d).  We now use ?? null so that a
+  // missing field surfaces as "—" rather than a misleading 0.
+  //
+  // These three fields must match exactly what analytics_service.py returns:
+  //   avg_daily_steps_7d   — mean steps over the last 7 logged days
+  //   avg_daily_water_7d   — mean water (L) over the last 7 logged days
+  //   avg_daily_sleep_7d   — mean sleep (hrs) over the last 7 logged days
+  const avgDailySteps7d = analytics.avg_daily_steps_7d ?? null;
+  const avgDailyWater7d = analytics.avg_daily_water_7d ?? null;
+  const avgDailySleep7d = analytics.avg_daily_sleep_7d ?? null;
+
+  // Helper: display a numeric value or "—" when the backend returned null.
+  // This prevents a legitimate 0 from the DB being indistinguishable from
+  // "field not found / not yet calculated".
+  const fmt = (v, suffix = "") =>
+    v !== null && v !== undefined ? `${v}${suffix}` : "—";
+
+  // KPI cards — all sourced from 7-day rolling window fields.
   const stats = [
     {
       icon: <Dumbbell size={18} />,
       title: "Total Workouts",
-      value: analytics.total_workouts,
+      value: analytics.total_workouts ?? "—",
       subtitle: "Completed",
       trend: dc.total_workouts ?? null,
       iconColor: "icon-indigo",
@@ -314,32 +352,37 @@ export default function Dashboard() {
     {
       icon: <Activity size={18} />,
       title: "Total Reps",
-      value: analytics.total_reps,
+      value: analytics.total_reps ?? "—",
       subtitle: "All Exercises",
       trend: dc.total_reps ?? null,
       iconColor: "icon-violet",
     },
     {
-      icon: <Target size={18} />,
-      title: "Form Score",
-      value: `${analytics.avg_form_score}%`,
-      subtitle: "Average",
-      trend: dc.avg_form_score ?? null,
+      // Average Daily Water — last 7 calendar days, divides by days logged.
+      icon: <Droplets size={18} />,
+      title: "Avg Daily Water",
+      value: fmt(avgDailyWater7d, " L"),
+      subtitle: "Last 7 Days",
+      trend: dc.avg_water ?? null,
       iconColor: "icon-cyan",
     },
     {
+      // Average Daily Steps — last 7 calendar days, divides by days logged.
       icon: <Footprints size={18} />,
-      title: "Steps",
-      value: analytics.total_steps?.toLocaleString(),
-      subtitle: "Tracked",
+      title: "Avg Daily Steps",
+      // BUG FIX: was `avgDailySteps7d.toLocaleString()` which throws when
+      // avgDailySteps7d is null (field absent from response).
+      value: avgDailySteps7d !== null ? avgDailySteps7d.toLocaleString() : "—",
+      subtitle: "Last 7 Days",
       trend: dc.total_steps ?? null,
       iconColor: "icon-emerald",
     },
     {
+      // Average Sleep — last 7 calendar days.
       icon: <Moon size={18} />,
       title: "Sleep",
-      value: `${analytics.avg_sleep}h`,
-      subtitle: "Average",
+      value: fmt(avgDailySleep7d, "h"),
+      subtitle: "Last 7 Days",
       trend: dc.avg_sleep ?? null,
       iconColor: "icon-amber",
     },
@@ -417,7 +460,6 @@ export default function Dashboard() {
                 animate="visible"
                 custom={1}
               >
-                {/* ── UPDATED: personalized greeting, fetched from Profile ── */}
                 Welcome Back{displayName ? `, ${displayName}` : ""}
               </motion.h1>
 
@@ -428,7 +470,6 @@ export default function Dashboard() {
                 animate="visible"
                 custom={2}
               >
-                {/* ── UPDATED subheading copy ── */}
                 You're making steady progress toward your personalized fitness
                 goals.
                 <br />
@@ -442,17 +483,28 @@ export default function Dashboard() {
                 animate="visible"
                 custom={3}
               >
+                {/* BUG FIX: Hero pills now use the same null-safe values as
+                    the KPI cards above, sourced from the correct 7-day
+                    rolling average fields.  Previously these could render
+                    "0 L avg daily water" when the field was null/undefined. */}
                 <div className="hero-pill">
                   <span className="pill-dot dot-green" />
-                  <span>{analytics.total_workouts} workouts this week</span>
+                  <span>
+                    {analytics.total_workouts ?? "—"} workouts this week
+                  </span>
                 </div>
                 <div className="hero-pill">
                   <span className="pill-dot dot-indigo" />
-                  <span>{analytics.avg_form_score}% avg form score</span>
+                  <span>{fmt(avgDailyWater7d, " L")} avg daily water</span>
                 </div>
                 <div className="hero-pill">
                   <span className="pill-dot dot-cyan" />
-                  <span>{analytics.total_steps?.toLocaleString()} steps</span>
+                  <span>
+                    {avgDailySteps7d !== null
+                      ? avgDailySteps7d.toLocaleString()
+                      : "—"}{" "}
+                    avg daily steps
+                  </span>
                 </div>
               </motion.div>
 
