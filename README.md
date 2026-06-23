@@ -31,6 +31,25 @@
 
 ---
 
+## Live Deployment
+
+### Frontend (Vercel)
+
+https://ai-gym-fitness-assistant-beta.vercel.app
+
+### Backend API (Render)
+
+https://ai-gym-fitness-assistant-e2rv.onrender.com
+
+### FastAPI Documentation
+
+https://ai-gym-fitness-assistant-e2rv.onrender.com/docs
+
+> Note:
+> AI Webcam Trainer is available only in local mode because cloud-hosted servers cannot access physical webcam devices. All other modules are fully deployed online.
+
+---
+
 ## Tech Stack
 
 ### Frontend
@@ -139,7 +158,7 @@ Cloud servers (Render, Railway, Heroku) are headless Linux containers — they h
 **Step 1 — Clone and set up the backend**
 
 ```bash
-git clone https://github.com/your-username/AI-Gym-Fitness-Assistant.git
+git clone https://github.com/dodiyariya6/AI-Gym-Fitness-Assistant.git
 cd AI-Gym-Fitness-Assistant/backend
 python -m venv venv
 source venv/bin/activate        # Windows: venv\Scripts\activate
@@ -386,10 +405,26 @@ VITE_API_BASE_URL=http://127.0.0.1:8000
 
 **Riya Dodiya**
 
-Developed the complete AI Gym & Fitness Assistant application, including frontend development, backend development, database integration, AI module integration, testing, documentation, and deployment.
+Developed as part of an academic engineering project.
+
+Responsibilities:
+
+• Frontend development
+
+• Backend API development
+
+• AI integration
+
+• Database integration
+
+• Testing
+
+• Deployment
+
+• Documentation
 
 ---
 
 ## License
 
-Developed as a Project for academic submission. For usage or collaboration inquiries, contact the contributor directly.
+Developed as a Project for academic submission. This project was developed for academic purposes and submitted as part of an engineering curriculum.
