@@ -35,7 +35,7 @@ const api = axios.create({
 
     "http://localhost:8000",
 
-  timeout: 30000,
+  timeout: 50000,
 
 });
 
