@@ -110,14 +110,6 @@ export default function Register() {
   return (
     <div className="auth-container">
       <form className="auth-form" onSubmit={handleSubmit}>
-        <div className="auth-brand">
-          <span className="auth-brand-mark">IFA</span>
-          <span className="auth-brand-full">Intelligent Fitness Assistant</span>
-          <span className="auth-brand-tagline">
-            Your Personal AI Gym &amp; Fitness Assistant
-          </span>
-        </div>
-
         <div>
           <h1>Register</h1>
 

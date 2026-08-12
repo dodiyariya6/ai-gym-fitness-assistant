@@ -14,6 +14,22 @@
 ![Leaflet](https://img.shields.io/badge/Leaflet-199900?style=for-the-badge&logo=leaflet&logoColor=white)
 ![pytest](https://img.shields.io/badge/pytest-0A9EDC?style=for-the-badge&logo=pytest&logoColor=white)
 
+---
+
+## Live Demo
+
+> **IFA — Intelligent Fitness Assistant** is deployed and available online.
+
+| Service               | Link |
+| --------------------- | ---- |
+| **Web Application**   | [https://ai-gym-fitness-assistant-beta.vercel.app](https://ai-gym-fitness-assistant-beta.vercel.app) |
+| **Backend API**       | [https://ai-gym-fitness-assistant-e2rv.onrender.com](https://ai-gym-fitness-assistant-e2rv.onrender.com) |
+| **API Documentation** | [https://ai-gym-fitness-assistant-e2rv.onrender.com/docs](https://ai-gym-fitness-assistant-e2rv.onrender.com/docs) |
+
+**Frontend:** Vercel · **Backend:** Render · **Database:** Neon PostgreSQL · **AI:** Google Gemini
+
+---
+
 IFA is a full-stack fitness platform that tracks workouts and daily habits, generates AI meal plans, scores a webcam-based exercise session in real time, and turns all of that logged data into a single, grounded set of AI insights — a Dashboard, a Coach, and a deeper Reports view all reading from the same source of truth instead of three disconnected AI features.
 
 ---

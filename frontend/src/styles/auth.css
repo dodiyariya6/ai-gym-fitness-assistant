@@ -39,46 +39,6 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
 }
 
-/* ── Brand Identity ───────────────────────────────────────────────────────
-   Text-only — no graphic mark on the auth pages (the app's actual icon
-   lives in Sidebar.jsx, shown only once a user is signed in). "IFA" is
-   still present as plain text, just no longer styled as an oversized
-   logo-treatment; auth-brand-full carries the visual weight instead:
-     1. auth-brand-mark      — "IFA", small uppercase label
-     2. auth-brand-full      — "Intelligent Fitness Assistant", primary
-     3. auth-brand-tagline   — supporting tagline, smallest and lightest
-──────────────────────────────────────────────────────────────────────── */
-
-.auth-brand {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  margin-bottom: 12px;
-}
-
-.auth-brand-mark {
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #6366f1;
-  line-height: 1.1;
-}
-
-.auth-brand-full {
-  font-size: 19px;
-  font-weight: 700;
-  color: #111827;
-  letter-spacing: -0.01em;
-}
-
-.auth-brand-tagline {
-  font-size: 12.5px;
-  font-weight: 400;
-  color: #9ca3af;
-}
-
 /* ── Header ───────────────────────────────────────────────────────────── */
 
 .auth-eyebrow {
