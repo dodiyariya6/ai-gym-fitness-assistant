@@ -20,10 +20,10 @@
 
 > **IFA — Intelligent Fitness Assistant** is deployed and available online.
 
-| Service               | Link |
-| --------------------- | ---- |
-| **Web Application**   | [https://ai-gym-fitness-assistant-beta.vercel.app](https://ai-gym-fitness-assistant-beta.vercel.app) |
-| **Backend API**       | [https://ai-gym-fitness-assistant-e2rv.onrender.com](https://ai-gym-fitness-assistant-e2rv.onrender.com) |
+| Service               | Link                                                                                                               |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| **Web Application**   | [https://ai-gym-fitness-assistant-beta.vercel.app](https://ai-gym-fitness-assistant-beta.vercel.app)               |
+| **Backend API**       | [https://ai-gym-fitness-assistant-e2rv.onrender.com](https://ai-gym-fitness-assistant-e2rv.onrender.com)           |
 | **API Documentation** | [https://ai-gym-fitness-assistant-e2rv.onrender.com/docs](https://ai-gym-fitness-assistant-e2rv.onrender.com/docs) |
 
 **Frontend:** Vercel · **Backend:** Render · **Database:** Neon PostgreSQL · **AI:** Google Gemini
@@ -36,7 +36,7 @@ IFA is a full-stack fitness platform that tracks workouts and daily habits, gene
 
 ## Overview
 
-Most fitness apps are one thing: a workout logger, or a calorie counter, or a chatbot. IFA is built around a different idea — that a workout log, a sleep log, and a wellness score are only useful together, and that AI should *interpret* real, already-computed numbers rather than generate advice from nothing.
+Most fitness apps are one thing: a workout logger, or a calorie counter, or a chatbot. IFA is built around a different idea — that a workout log, a sleep log, and a wellness score are only useful together, and that AI should _interpret_ real, already-computed numbers rather than generate advice from nothing.
 
 Every module writes to the same PostgreSQL database. A deterministic analytics layer turns that data into a wellness score, trend directions, progressive-overload trends, and habit/workout correlations — all plain arithmetic, no AI involved. Only then does Gemini get called, and only to interpret those already-computed findings into short, evidence-backed insights. If Gemini is unavailable, the same findings are rendered as insights directly, without an AI call at all.
 
@@ -62,30 +62,39 @@ IFA combines:
 ## Core Capabilities
 
 ### AI Coach
+
 A Gemini-powered fitness chatbot grounded in the user's real, already-computed context — recent workouts, habit trends, wellness score, weaknesses and improvements — never a generic chatbot. Conversations persist as sessions; each reply is generated from a bounded recent-history window (not the full lifetime conversation), so context stays relevant without unbounded prompt growth. Falls back to a fixed, safe message if Gemini is unavailable.
 
 ### Workout Tracking
+
 Manual exercise logging (sets, reps, duration, notes, date) with automatic MET-based calorie estimation using the user's body weight. Every workout — manual or webcam-generated — is deleteable, with ownership-checked deletion that correctly updates history, stats, and analytics on the next load.
 
 ### AI Webcam Trainer
+
 Real-time pose detection via MediaPipe Tasks Vision, running entirely client-side against the visitor's own camera: tracks body landmarks, counts reps through joint-angle analysis, and scores exercise form 0–100. Supports Squats, Bicep Curls, Pushups, Lunges, and Jumping Jacks. See [Webcam Trainer](#webcam-trainer) for the architecture and browser requirements.
 
 ### Habit Tracking
+
 Daily logging of water intake, sleep, steps, and workout completion, with duplicate-entry prevention, past-date backfilling, a weekly matrix view, and per-entry deletion. Surfaces habit/workout correlation and consistency insights inline.
 
 ### AI Dietician
+
 Calculates BMI, BMR (Mifflin-St Jeor) and TDEE from profile data, then asks Gemini for a personalized meal plan and grocery list. Every generated plan is persisted — a "Recent Plans" list lets the user reload a saved plan (no new Gemini call) as a clearly separate action from generating a new one.
 
 ### Wellness Analytics
+
 A single 0–100 wellness score computed from sleep, hydration, steps, workout completion, form score, and logging streak, with a per-component point breakdown so the user can see exactly what moved the score.
 
 ### Reports
+
 The deeper analytics view: KPI trends, the full wellness score breakdown, and the complete set of structured AI insights (category, priority, evidence, recommendation) — not just the compact top items shown on the Dashboard.
 
 ### Gym Finder
+
 Finds nearby gyms via OpenStreetMap/Overpass from the user's browser location (or their saved Profile city as a fallback), with an adjustable search radius and an interactive Leaflet map showing the user's position and every result.
 
 ### Profile
+
 The single source of personalization — biometrics, fitness goals, activity level, and location — used to generate personalized water/sleep/step/calorie targets that the Dietician, Habits, and analytics all read from.
 
 ---
@@ -124,6 +133,7 @@ Deterministic analytics and AI interpretation are deliberately kept in separate 
 ## AI Architecture
 
 **Deterministic logic handles:**
+
 - Wellness score and its per-component breakdown
 - Daily/weekly trend directions (up / down / neutral)
 - Progressive overload detection per exercise (improving / plateau / declining, from session-over-session rep and volume averages)
@@ -132,6 +142,7 @@ Deterministic analytics and AI interpretation are deliberately kept in separate 
 - Consistency streaks and achievement unlocks
 
 **AI (Gemini) handles:**
+
 - Interpreting those findings into short, prioritized, evidence-linked insights
 - Contextual coaching replies grounded in the user's real data
 - Meal plan and grocery list generation
@@ -163,39 +174,51 @@ Profile
 The screenshots below were captured before the current UI intelligence panels, Gym Finder map, and Dietician history were added, and still show the project's earlier "AI Gym & Fitness Assistant" branding — they're kept because they accurately demonstrate the underlying features, not because they show the latest UI. Layout and branding have since moved on; functionality has not regressed.
 
 ### Dashboard
+
 ![Dashboard](screenshots/dashboard-hero.png)
 
 ### Analytics & Consistency Tracker
+
 ![Analytics](screenshots/dashboard-analytics.png)
 
 ### AI Dietician
+
 ![AI Dietician](screenshots/dietician-mealplan.png)
-*Predates persisted meal-plan history — shows generation only.*
+_Predates persisted meal-plan history — shows generation only._
 
 ### AI Fitness Chat
+
 ![Fitness Chat](screenshots/fitness-chat.png)
 
 ### Habit Tracker
+
 ![Habit Tracker](screenshots/habit-tracker.png)
 
 ### Workout Tracker
+
 ![Workout Tracker](screenshots/workout-tracker.png)
 
 ### Webcam Trainer Interface
+
 ![Webcam Trainer](screenshots/webcam-trainer.png)
 
 ### Webcam Live Pose Detection
+
 ![Webcam Live Detection](screenshots/webcam-live-detection.png)
-*Captured against the earlier server-side detection flow — the live camera view and rep-counting shown here are unchanged in the current browser-based implementation (see [Webcam Trainer](#webcam-trainer)).*
+
+_Captured against the earlier server-side detection flow — the live camera view and rep-counting shown here are unchanged in the current browser-based implementation (see [Webcam Trainer](#webcam-trainer))._
 
 ### Gym Finder
+
 ![Gym Finder](screenshots/gym-fnder.png)
-*Predates the interactive map — shows the result list only.*
+_Predates the interactive map — shows the result list only._
 
 ### Reports & Insights
+
 ![Reports](screenshots/reports-overview.png)
 
 ### Profile & Personalized Goals
+
 ![Profile](screenshots/profile.png)
 
 ---
@@ -203,58 +226,65 @@ The screenshots below were captured before the current UI intelligence panels, G
 ## Tech Stack
 
 ### Frontend
-| Technology | Role |
-| --- | --- |
-| React 19 + Vite | UI framework and build tooling |
-| React Router DOM v7 | Client-side routing and protected routes |
-| Framer Motion | Animation |
-| Recharts | Analytics charts |
-| Axios | API client (shared instance, auto-attaches JWT) |
-| Leaflet + React Leaflet | Interactive Gym Finder map |
-| MediaPipe Tasks Vision | Client-side pose detection for the Webcam Trainer |
-| Lucide React | Icon set |
+
+| Technology              | Role                                              |
+| ----------------------- | ------------------------------------------------- |
+| React 19 + Vite         | UI framework and build tooling                    |
+| React Router DOM v7     | Client-side routing and protected routes          |
+| Framer Motion           | Animation                                         |
+| Recharts                | Analytics charts                                  |
+| Axios                   | API client (shared instance, auto-attaches JWT)   |
+| Leaflet + React Leaflet | Interactive Gym Finder map                        |
+| MediaPipe Tasks Vision  | Client-side pose detection for the Webcam Trainer |
+| Lucide React            | Icon set                                          |
 
 ### Backend
-| Technology | Role |
-| --- | --- |
-| FastAPI | REST API |
-| SQLAlchemy | ORM |
-| Pydantic | Request/response validation and schemas |
-| python-jose | JWT encode/decode |
-| passlib + bcrypt | Password hashing |
-| slowapi | Per-route rate limiting |
+
+| Technology       | Role                                    |
+| ---------------- | --------------------------------------- |
+| FastAPI          | REST API                                |
+| SQLAlchemy       | ORM                                     |
+| Pydantic         | Request/response validation and schemas |
+| python-jose      | JWT encode/decode                       |
+| passlib + bcrypt | Password hashing                        |
+| slowapi          | Per-route rate limiting                 |
 
 ### Database
-| Technology | Role |
-| --- | --- |
-| Neon PostgreSQL | Production database — single source of truth |
+
+| Technology         | Role                                                |
+| ------------------ | --------------------------------------------------- |
+| Neon PostgreSQL    | Production database — single source of truth        |
 | SQLite (in-memory) | Isolated database for the automated test suite only |
 
 ### AI
-| Technology | Role |
-| --- | --- |
+
+| Technology                                                       | Role                                                        |
+| ---------------------------------------------------------------- | ----------------------------------------------------------- |
 | Google Gemini (`gemini-2.5-flash`, via `langchain-google-genai`) | Insight interpretation, AI coach, meal plans, grocery lists |
 
 ### Maps / External APIs
-| Technology | Role |
-| --- | --- |
-| OpenStreetMap | Map tiles |
-| Nominatim | Geocoding (profile city → coordinates) |
-| Overpass API | Nearby gym search |
-| Leaflet | Map rendering |
+
+| Technology    | Role                                   |
+| ------------- | -------------------------------------- |
+| OpenStreetMap | Map tiles                              |
+| Nominatim     | Geocoding (profile city → coordinates) |
+| Overpass API  | Nearby gym search                      |
+| Leaflet       | Map rendering                          |
 
 ### Testing
-| Technology | Role |
-| --- | --- |
-| pytest | Backend automated test suite |
-| FastAPI `TestClient` | HTTP-level API testing |
+
+| Technology           | Role                         |
+| -------------------- | ---------------------------- |
+| pytest               | Backend automated test suite |
+| FastAPI `TestClient` | HTTP-level API testing       |
 
 ### Deployment
-| Layer | Platform |
-| --- | --- |
-| Frontend | Vercel |
-| Backend | Render |
-| Database | Neon |
+
+| Layer    | Platform |
+| -------- | -------- |
+| Frontend | Vercel   |
+| Backend  | Render   |
+| Database | Neon     |
 
 ---
 
@@ -322,6 +352,7 @@ AIGymProject/
 The backend has an automated pytest suite (`backend/tests/`) that runs against an isolated in-memory SQLite database — the real Neon database and the real Gemini API are never touched by a test. Gemini is forced "unavailable" by default so every test exercises the deterministic fallback path unless it explicitly mocks a Gemini call.
 
 Coverage includes:
+
 - Auth/onboarding (token issuance, profile-completion signal)
 - Deterministic analytics (no fabricated history for new users, progressive overload detection, non-causal correlation wording, insights schema)
 - AI reliability (Gemini-unavailable fallback for both insights and chat)
@@ -344,18 +375,21 @@ This is not a claim of 100% coverage — it targets the behaviors above rather t
 ## Installation
 
 ### Prerequisites
+
 - Node.js 18+
 - Python 3.10+
 - A Neon (or any) PostgreSQL connection string
 - A Google Gemini API key
 
 ### 1. Clone
+
 ```bash
 git clone https://github.com/dodiyariya6/AI-Gym-Fitness-Assistant.git
 cd AI-Gym-Fitness-Assistant
 ```
 
 ### 2. Backend setup
+
 ```bash
 cd backend
 python -m venv venv
@@ -364,19 +398,24 @@ pip install -r requirements.txt
 ```
 
 ### 3. Environment variables
+
 Copy `backend/.env.example` to `backend/.env` and fill in real values (see [Environment Variables](#environment-variables)).
 
 ### 4. Database
+
 No manual migration step — SQLAlchemy's `Base.metadata.create_all()` creates any missing tables against `DATABASE_URL` on backend startup.
 
 ### 5. Frontend setup
+
 ```bash
 cd frontend
 npm install
 ```
+
 Copy `frontend/.env.example` to `frontend/.env` and set `VITE_API_URL` to your backend's URL.
 
 ### 6. Run locally
+
 ```bash
 # Terminal 1 — backend
 cd backend && uvicorn app.main:app --reload
@@ -420,6 +459,7 @@ The AI Webcam Trainer runs pose detection **entirely in the visitor's browser** 
 This is why the webcam trainer is fully functional on the deployed frontend, unlike an earlier version of this project that ran pose detection server-side (`cv2.VideoCapture` against the backend host's own camera) — an architecture that could only ever work on the developer's own machine, since a deployed backend has no camera or display.
 
 **Requirements:**
+
 - A secure context — HTTPS in production (Vercel provides this by default) or `localhost` in development. Browsers refuse camera access otherwise.
 - Camera permission granted when the browser prompts.
 - A modern browser with `getUserMedia` support (Chrome, Edge, Firefox, Safari — desktop and mobile).
@@ -432,18 +472,18 @@ This is why the webcam trainer is fully functional on the deployed frontend, unl
 
 All endpoints except `/`, `/auth/register`, and `/auth/login` require a `Bearer` JWT.
 
-| Group | Base route | Covers |
-| --- | --- | --- |
-| Authentication | `/auth` | Register (issues a token), login |
-| Profile | `/profile` | Get/create/update profile, generate & fetch personalized targets |
-| Workouts | `/workout` | Log, list, delete (manual and webcam-generated) |
-| Habits | `/habit` | Log, update, list, delete |
-| Analytics | `/analytics` | Aggregate stats, trends, AI insights, per-exercise progressive overload |
-| Consistency | `/consistency` | Streaks and weekly/monthly consistency |
-| Achievements | `/achievements` | Badge evaluation and unlock status |
-| Fitness Chat | `/fitness` | AI coach messages, session list, session history |
-| Dietician | `/diet` | BMI/BMR/TDEE/macros, meal plan + grocery generation, plan history, delete |
-| Gym Finder | `/gym-finder` | Profile-location lookup, nearby gym search |
+| Group          | Base route      | Covers                                                                    |
+| -------------- | --------------- | ------------------------------------------------------------------------- |
+| Authentication | `/auth`         | Register (issues a token), login                                          |
+| Profile        | `/profile`      | Get/create/update profile, generate & fetch personalized targets          |
+| Workouts       | `/workout`      | Log, list, delete (manual and webcam-generated)                           |
+| Habits         | `/habit`        | Log, update, list, delete                                                 |
+| Analytics      | `/analytics`    | Aggregate stats, trends, AI insights, per-exercise progressive overload   |
+| Consistency    | `/consistency`  | Streaks and weekly/monthly consistency                                    |
+| Achievements   | `/achievements` | Badge evaluation and unlock status                                        |
+| Fitness Chat   | `/fitness`      | AI coach messages, session list, session history                          |
+| Dietician      | `/diet`         | BMI/BMR/TDEE/macros, meal plan + grocery generation, plan history, delete |
+| Gym Finder     | `/gym-finder`   | Profile-location lookup, nearby gym search                                |
 
 The Webcam Trainer has no dedicated backend route — pose detection runs entirely in the browser (see [Webcam Trainer](#webcam-trainer)); a finished session is saved through the same `/workout` endpoints as manual logging.
 
@@ -453,12 +493,12 @@ Full interactive documentation is auto-generated by FastAPI at `/docs` on any ru
 
 ## Deployment
 
-| Layer | Platform | URL |
-| --- | --- | --- |
-| Frontend | Vercel | https://ai-gym-fitness-assistant-beta.vercel.app |
-| Backend API | Render | https://ai-gym-fitness-assistant-e2rv.onrender.com |
-| API Docs | Render (FastAPI) | https://ai-gym-fitness-assistant-e2rv.onrender.com/docs |
-| Database | Neon PostgreSQL | — |
+| Layer       | Platform         | URL                                                     |
+| ----------- | ---------------- | ------------------------------------------------------- |
+| Frontend    | Vercel           | https://ai-gym-fitness-assistant-beta.vercel.app        |
+| Backend API | Render           | https://ai-gym-fitness-assistant-e2rv.onrender.com      |
+| API Docs    | Render (FastAPI) | https://ai-gym-fitness-assistant-e2rv.onrender.com/docs |
+| Database    | Neon PostgreSQL  | —                                                       |
 
 Every module, including the AI Webcam Trainer, is fully deployed and functional online — the webcam trainer runs entirely in the visitor's own browser, so it works the same way for any visitor as it does locally (see [Webcam Trainer](#webcam-trainer)).
 
@@ -485,7 +525,7 @@ In line with keeping IFA a small set of excellent, connected capabilities rather
 
 ## Project Status
 
-IFA is a complete, working full-stack application — authentication, tracking, AI coaching, analytics, and deployment are all implemented and covered by an automated test suite, not a partial prototype. It is a portfolio/academic engineering project: production-*shaped* (JWT auth, ownership checks, rate limiting, CI-style test isolation, graceful AI degradation), but run on a single free-tier database and backend instance rather than production infrastructure.
+IFA is a complete, working full-stack application — authentication, tracking, AI coaching, analytics, and deployment are all implemented and covered by an automated test suite, not a partial prototype. It is a portfolio/academic engineering project: production-_shaped_ (JWT auth, ownership checks, rate limiting, CI-style test isolation, graceful AI degradation), but run on a single free-tier database and backend instance rather than production infrastructure.
 
 ---
 
