@@ -6,11 +6,18 @@ backend/venv/
 backend/__pycache__/
 **/__pycache__/
 *.pyc
+.pytest_cache/
 
 # Environment files
+# (.env.example files are intentionally NOT ignored — they're placeholder
+# templates meant to be committed; see backend/.env.example, frontend/.env.example)
 
 backend/.env
 frontend/.env
+.env.local
+.env.*.local
+
+.coverage
 
 # ======================
 # React / Vite
@@ -27,11 +34,12 @@ yarn-debug.log*
 yarn-error.log*
 
 # ======================
-# IDE
+# IDE / Local tooling
 # ======================
 
 .vscode/
 .idea/
+.claude/
 
 # ======================
 # OS files
@@ -44,3 +52,4 @@ Thumbs.db
 # Other files
 # ======================
 project_audit.txt
+AI Gym & Fitness Assistant terminal commnads.txt

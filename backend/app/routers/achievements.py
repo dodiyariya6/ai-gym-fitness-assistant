@@ -1,7 +1,7 @@
 # app/routers/achievements.py
 """
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: achievements.py
 

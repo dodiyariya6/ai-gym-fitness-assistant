@@ -1,7 +1,7 @@
 // src/pages/Dietician.jsx
 /*
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: Dietician.jsx
 
@@ -29,11 +29,19 @@ Dietician page
 
 ==================================================
 */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import DashboardLayout from "../layouts/DashboardLayout";
-import { generateMealPlan, generateGroceryList } from "../services/dietService";
-import { getProfile } from "../services/profileService";
+import {
+  generateMealPlan,
+  generateGroceryList,
+  getMealPlanHistory,
+  getMealPlanById,
+  deleteMealPlan,
+} from "../services/dietService";
+import { getProfile, getStoredTargets } from "../services/profileService";
+import { useToast } from "../context/ToastContext";
+import ConfirmDialog from "../components/common/ConfirmDialog";
 import {
   Sparkles,
   User,
@@ -51,6 +59,8 @@ import {
   CheckCircle2,
   Circle,
   ChefHat,
+  History as HistoryIcon,
+  Trash2,
 } from "lucide-react";
 
 // ── Animation Variants ────────────────────────────────────────────────────
@@ -213,9 +223,68 @@ function GroceryItem({ item, index }) {
   );
 }
 
+// ── RecentPlanRow ─────────────────────────────────────────────────────────
+// One row in the "Recent Plans" list — persisted MealPlan rows the backend
+// already creates on every generation (see POST /diet/meal-plan). Loading a
+// plan here never calls Gemini again; only the separate "Generate New" form
+// flow does.
+
+function formatPlanDate(isoString) {
+  if (!isoString) return "";
+  try {
+    return new Date(isoString).toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+    });
+  } catch {
+    return "";
+  }
+}
+
+function RecentPlanRow({ plan, active, loading, onLoad, onDelete, index }) {
+  const excerpt = (plan.meal_plan || "").replace(/\s+/g, " ").slice(0, 70);
+  return (
+    <motion.div
+      className={`recent-plan-row${active ? " recent-plan-row--active" : ""}`}
+      variants={fadeUp}
+      custom={index}
+      initial="hidden"
+      animate="visible"
+    >
+      <button
+        type="button"
+        className="recent-plan-load"
+        onClick={() => onLoad(plan.id)}
+        disabled={loading}
+      >
+        <span className="recent-plan-top">
+          <span className="recent-plan-goal">{plan.goal}</span>
+          <span className="recent-plan-date">
+            {loading ? "Loading…" : formatPlanDate(plan.created_at)}
+          </span>
+        </span>
+        <span className="recent-plan-meta">{plan.diet_type}</span>
+        {excerpt && <span className="recent-plan-excerpt">{excerpt}…</span>}
+      </button>
+      <button
+        type="button"
+        className="recent-plan-delete"
+        onClick={() => onDelete(plan)}
+        disabled={loading}
+        title="Delete this plan"
+        aria-label={`Delete meal plan for ${plan.goal}`}
+      >
+        <Trash2 size={14} />
+      </button>
+    </motion.div>
+  );
+}
+
 // ── Main Page ─────────────────────────────────────────────────────────────
 
 export default function Dietician() {
+  const { toast } = useToast();
+
   const [formData, setFormData] = useState({
     age: "",
     gender: "",
@@ -230,9 +299,54 @@ export default function Dietician() {
   const [groceryLoading, setGroceryLoading] = useState(false);
   const [prefilled, setPrefilled] = useState(false);
 
+  // Preview step — holds the exact payload that would be sent to Gemini.
+  // null until the user previews; set by handlePreviewMealPlan(), cleared by
+  // handleConfirmMealPlan() (on success) or handleDiscardMealPlanPreview().
+  // Mirrors the same preview → confirm pattern already used on the Workout
+  // and Habits pages, so the user sees what they're about to generate
+  // before the (billed) Gemini call actually fires.
+  const [pendingMealPlanRequest, setPendingMealPlanRequest] = useState(null);
+
+  // Profile-derived context that isn't shown as its own form field — sent
+  // silently alongside the visible inputs so the generated plan reflects the
+  // same activity level and calorie target already calculated on the
+  // Profile page, instead of Gemini re-deriving its own numbers from scratch.
+  const [profileContext, setProfileContext] = useState({
+    activity_level: null,
+    target_calories: null,
+  });
+
+  // Recent Plans — persisted history (Change 8/9). activePlanId tracks
+  // whichever plan is currently shown (freshly generated OR loaded from
+  // history) so a subsequent grocery-list generation persists onto the
+  // right row instead of being stateless.
+  const [history, setHistory] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const [activePlanId, setActivePlanId] = useState(null);
+  const [loadingPlanId, setLoadingPlanId] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const loadHistory = useCallback(async () => {
+    try {
+      setHistoryLoading(true);
+      const data = await getMealPlanHistory();
+      setHistory(Array.isArray(data) ? data : []);
+    } catch {
+      setHistory([]);
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadHistory();
+  }, [loadHistory]);
+
   // ── Prefill from Profile if available ─────────────────────────────────────
-  // Runs once on mount. If a profile exists, fills Age / Gender / Height / Weight.
-  // User can still edit every field freely — this just saves re-typing.
+  // Runs once on mount. If a profile exists, fills Age / Gender / Height /
+  // Weight / Goal. User can still edit every field freely — this just saves
+  // re-typing what's already saved on the Profile page.
   useEffect(() => {
     (async () => {
       try {
@@ -244,11 +358,36 @@ export default function Dietician() {
             gender: profile.gender ? profile.gender : prev.gender,
             height: profile.height ? String(profile.height) : prev.height,
             weight: profile.weight ? String(profile.weight) : prev.weight,
+            goal:
+              profile.fitness_goals && profile.fitness_goals.length > 0
+                ? profile.fitness_goals.join(", ")
+                : prev.goal,
+          }));
+          setProfileContext((prev) => ({
+            ...prev,
+            activity_level: profile.activity_level || null,
           }));
           setPrefilled(true);
         }
       } catch {
         // No profile yet — form stays blank, user fills manually. No error shown.
+      }
+    })();
+
+    // Stored calorie target — same value shown on the Profile page's
+    // "Personalized Daily Targets" card. Fetched separately since it lives
+    // on a different endpoint than the core profile fields above.
+    (async () => {
+      try {
+        const targets = await getStoredTargets();
+        if (targets?.calorie_goal) {
+          setProfileContext((prev) => ({
+            ...prev,
+            target_calories: targets.calorie_goal,
+          }));
+        }
+      } catch {
+        // No stored targets yet — Gemini falls back to estimating its own.
       }
     })();
   }, []);
@@ -257,33 +396,55 @@ export default function Dietician() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleMealPlan = async () => {
+  // Step 1: validate and move to preview — no Gemini call yet.
+  const handlePreviewMealPlan = () => {
     const { age, gender, height, weight, goal, diet_type } = formData;
     if (!age || !gender || !height || !weight || !goal || !diet_type) {
-      alert("Please fill all fields.");
+      toast.warning("Please fill all fields.");
       return;
     }
+    setPendingMealPlanRequest({
+      ...formData,
+      activity_level: profileContext.activity_level ?? undefined,
+      target_calories: profileContext.target_calories ?? undefined,
+    });
+  };
+
+  // Step 2a: user confirms — this is the actual (billed) Gemini call.
+  const handleConfirmMealPlan = async () => {
+    if (!pendingMealPlanRequest) return;
     try {
       setLoading(true);
-      const result = await generateMealPlan(formData);
+      const result = await generateMealPlan(pendingMealPlanRequest);
       if (result?.meal_plan) {
         setMealPlan(result.meal_plan);
         setGroceryList("");
+        setActivePlanId(result.id ?? null);
+        setPendingMealPlanRequest(null);
+        loadHistory(); // refresh Recent Plans with the newly generated one
       } else {
         throw new Error("Invalid response");
       }
     } catch (error) {
       console.error(error);
-      alert("Unable to generate meal plan.");
+      toast.error("Unable to generate meal plan.");
     } finally {
       setLoading(false);
     }
   };
 
+  // Step 2b: user discards — back to the form, data preserved for correction.
+  const handleDiscardMealPlanPreview = () => {
+    setPendingMealPlanRequest(null);
+  };
+
   const handleGrocery = async () => {
     try {
       setGroceryLoading(true);
-      const result = await generateGroceryList(mealPlan);
+      // Passing activePlanId persists the generated list onto that plan's
+      // row so it's still there next time this plan is loaded — see
+      // POST /diet/grocery-list.
+      const result = await generateGroceryList(mealPlan, activePlanId);
       if (result?.grocery_list) {
         setGroceryList(result.grocery_list);
       } else {
@@ -291,9 +452,62 @@ export default function Dietician() {
       }
     } catch (error) {
       console.error(error);
-      alert("Unable to generate grocery list.");
+      toast.error("Unable to generate grocery list.");
     } finally {
       setGroceryLoading(false);
+    }
+  };
+
+  // Load a previously generated plan — reads the persisted row directly,
+  // no Gemini call, distinct from the "Generate New" flow above.
+  const handleLoadPlan = async (planId) => {
+    try {
+      setLoadingPlanId(planId);
+      const plan = await getMealPlanById(planId);
+      setMealPlan(plan.meal_plan || "");
+      setGroceryList(plan.grocery_list || "");
+      setActivePlanId(plan.id);
+      setPendingMealPlanRequest(null);
+    } catch (error) {
+      console.error(error);
+      toast.error("Unable to load this meal plan.");
+    } finally {
+      setLoadingPlanId(null);
+    }
+  };
+
+  const handleDeleteRequest = (plan) => {
+    setDeleteTarget(plan);
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteTarget(null);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
+    try {
+      setDeleting(true);
+      await deleteMealPlan(deleteTarget.id);
+      toast.success("Meal plan deleted.");
+      if (activePlanId === deleteTarget.id) {
+        setMealPlan("");
+        setGroceryList("");
+        setActivePlanId(null);
+      }
+      setDeleteTarget(null);
+      await loadHistory();
+    } catch (error) {
+      if (error?.response?.status === 404) {
+        toast.warning("This plan was already removed.");
+        setDeleteTarget(null);
+        await loadHistory();
+      } else {
+        console.error(error);
+        toast.error("Unable to delete meal plan.");
+      }
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -472,24 +686,158 @@ export default function Dietician() {
 
           <button
             className="diet-generate-btn"
-            onClick={handleMealPlan}
+            onClick={handlePreviewMealPlan}
             disabled={loading}
             type="button"
           >
-            {loading ? (
-              <>
-                <span className="spinner" />
-                Generating your plan...
-              </>
-            ) : (
-              <>
-                <Sparkles size={15} />
-                Generate My Meal Plan
-                <ArrowRight size={15} />
-              </>
-            )}
+            <Sparkles size={15} />
+            Preview My Plan
+            <ArrowRight size={15} />
           </button>
         </motion.section>
+
+        {/* ── Recent Plans ──────────────────────────────────────
+            Persisted history (Change 8/9) — "Load" reads a saved plan with
+            zero Gemini calls, distinct from "Generate New" above which
+            always calls Gemini. Loading here never auto-regenerates. */}
+        {!historyLoading && history.length > 0 && (
+          <motion.section
+            className="diet-form-card"
+            variants={fadeUp}
+            initial="hidden"
+            animate="visible"
+            custom={1.5}
+          >
+            <div className="diet-form-header">
+              <div className="diet-form-title-row">
+                <HistoryIcon size={18} className="diet-form-icon" />
+                <div>
+                  <h3 className="diet-form-title">Recent Plans</h3>
+                  <p className="diet-form-subtitle">
+                    Load a previously generated plan — no new Gemini request.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="recent-plans-list">
+              {history.map((plan, i) => (
+                <RecentPlanRow
+                  key={plan.id}
+                  plan={plan}
+                  active={plan.id === activePlanId}
+                  loading={plan.id === loadingPlanId}
+                  onLoad={handleLoadPlan}
+                  onDelete={handleDeleteRequest}
+                  index={i}
+                />
+              ))}
+            </div>
+          </motion.section>
+        )}
+
+        {/* ── Preview & Confirm ─────────────────────────────────
+            Shows exactly what will be sent to Gemini — including the
+            Profile-derived activity level / calorie target that aren't
+            visible form fields — before the (billed) request fires. */}
+        <AnimatePresence>
+          {pendingMealPlanRequest && !mealPlan && (
+            <motion.section
+              className="diet-form-card"
+              variants={slideDown}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+            >
+              <div className="diet-form-header">
+                <div className="diet-form-title-row">
+                  <ChefHat size={18} className="diet-form-icon" />
+                  <div>
+                    <h3 className="diet-form-title">Review Before Generating</h3>
+                    <p className="diet-form-subtitle">
+                      Confirm these details before we ask Gemini to build
+                      your plan.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="diet-hero-pills">
+                <div className="diet-pill">
+                  <span className="pill-dot dot-indigo" />
+                  <span>Age {pendingMealPlanRequest.age}</span>
+                </div>
+                <div className="diet-pill">
+                  <span className="pill-dot dot-indigo" />
+                  <span>{pendingMealPlanRequest.gender}</span>
+                </div>
+                <div className="diet-pill">
+                  <span className="pill-dot dot-indigo" />
+                  <span>{pendingMealPlanRequest.height} cm</span>
+                </div>
+                <div className="diet-pill">
+                  <span className="pill-dot dot-indigo" />
+                  <span>{pendingMealPlanRequest.weight} kg</span>
+                </div>
+                <div className="diet-pill">
+                  <span className="pill-dot dot-green" />
+                  <span>Goal: {pendingMealPlanRequest.goal}</span>
+                </div>
+                <div className="diet-pill">
+                  <span className="pill-dot dot-green" />
+                  <span>Diet: {pendingMealPlanRequest.diet_type}</span>
+                </div>
+                {pendingMealPlanRequest.activity_level && (
+                  <div className="diet-pill">
+                    <span className="pill-dot dot-cyan" />
+                    <span>
+                      Activity: {pendingMealPlanRequest.activity_level}
+                    </span>
+                  </div>
+                )}
+                {pendingMealPlanRequest.target_calories && (
+                  <div className="diet-pill">
+                    <span className="pill-dot dot-cyan" />
+                    <span>
+                      Target: {pendingMealPlanRequest.target_calories} kcal/day
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div style={{ display: "flex", gap: "12px" }}>
+                <button
+                  className="diet-generate-btn"
+                  onClick={handleConfirmMealPlan}
+                  disabled={loading}
+                  type="button"
+                  style={{ flex: 1 }}
+                >
+                  {loading ? (
+                    <>
+                      <span className="spinner" />
+                      Generating your plan...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles size={15} />
+                      Generate My Meal Plan
+                    </>
+                  )}
+                </button>
+                <button
+                  className="diet-generate-btn diet-btn-secondary"
+                  onClick={handleDiscardMealPlanPreview}
+                  disabled={loading}
+                  type="button"
+                  style={{ flex: 1 }}
+                >
+                  Edit Details
+                </button>
+              </div>
+            </motion.section>
+          )}
+        </AnimatePresence>
 
         {/* ── Meal Plan Results ──────────────────────────────── */}
         <AnimatePresence>
@@ -602,6 +950,21 @@ export default function Dietician() {
             </motion.section>
           )}
         </AnimatePresence>
+
+        {/* ───────────────── Delete Confirmation ───────────────── */}
+        <ConfirmDialog
+          open={!!deleteTarget}
+          title="Delete meal plan?"
+          message={
+            deleteTarget
+              ? `This removes the "${deleteTarget.goal}" plan from ${formatPlanDate(deleteTarget.created_at)} and its grocery list, if any. This can't be undone.`
+              : ""
+          }
+          confirmLabel="Delete Plan"
+          loading={deleting}
+          onConfirm={handleDeleteConfirm}
+          onCancel={handleDeleteCancel}
+        />
       </div>
     </DashboardLayout>
   );

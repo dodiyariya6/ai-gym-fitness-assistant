@@ -1,7 +1,7 @@
 // src/pages/Reports.jsx
 /*
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: Reports.jsx
 
@@ -11,10 +11,10 @@ and AI-generated fitness insights.
 
 Functionality:
 - Displays fitness KPIs.
-- Displays wellness scores.
+- Displays wellness scores and their component breakdown.
 - Displays health insights.
 - Displays performance summaries.
-- Displays AI suggestions.
+- Displays structured, evidence-based AI insights.
 - Displays trend indicators.
 - Handles loading and error states.
 - Supports responsive layouts.
@@ -53,9 +53,27 @@ import {
   Info,
 } from "lucide-react";
 import DashboardLayout from "../layouts/DashboardLayout";
-import { getAnalytics } from "../services/analyticsService";
-import WellnessScoreBreakdown from "../components/common/WellnessScoreBreakdown";
+import { getAnalytics, getInsights } from "../services/analyticsService";
 import "../styles/reports.css";
+
+/* ── Insight category/priority display maps ────────────────────────────
+   Pure label/style lookup — every value shown still comes from the
+   backend's structured insight (see app/schemas/insight.py). */
+const CATEGORY_LABELS = {
+  wellness: "Wellness",
+  recovery: "Recovery",
+  progressive_overload: "Progressive Overload",
+  habit_correlation: "Habit Correlation",
+  consistency: "Consistency",
+  nutrition: "Nutrition",
+  general: "General",
+};
+
+const PRIORITY_BADGE = {
+  high: "badge-danger",
+  medium: "badge-warning",
+  low: "badge-success",
+};
 
 /* ── Animation Variants ─────────────────────────── */
 const fadeUp = {
@@ -209,18 +227,65 @@ function InsightRow({ label, value, status, icon: Icon, color }) {
   );
 }
 
-/* ── SuggestionItem ─────────────────────────────── */
-function SuggestionItem({ text, index }) {
+/* ── InsightCard ────────────────────────────────── */
+/* Renders one structured insight from GET /analytics/insights. Every field
+   (category, priority, evidence, recommendation, action) is displayed as
+   returned — no re-derivation or re-wording happens on the frontend. */
+function InsightCard({ insight, index }) {
+  const badgeCls = PRIORITY_BADGE[insight.priority] || "badge-info";
   return (
     <motion.div
-      className="suggestion-item"
+      className="insight-card-item"
       variants={fadeUp}
       custom={index}
       initial="hidden"
       animate="visible"
     >
-      <div className="suggestion-dot" />
-      <p className="suggestion-text">{text}</p>
+      <div className="insight-card-top">
+        <span className="insight-category-chip">
+          {CATEGORY_LABELS[insight.category] || insight.category}
+        </span>
+        <span className={`status-badge ${badgeCls}`}>{insight.priority}</span>
+      </div>
+      <p className="insight-card-title">{insight.title}</p>
+      <p className="insight-card-line">
+        <span className="insight-card-line-label">Evidence — </span>
+        {insight.evidence}
+      </p>
+      <p className="insight-card-line insight-card-recommendation">
+        <span className="insight-card-line-label">Recommended — </span>
+        {insight.recommendation}
+      </p>
+      {insight.action && (
+        <span className="insight-card-action-tag">{insight.action}</span>
+      )}
+    </motion.div>
+  );
+}
+
+/* ── WellnessBreakdownRow ───────────────────────── */
+/* Displays one already-computed component of the wellness score
+   (analytics.wellness_breakdown) — the score itself is never recalculated
+   here, only rendered. See analytics_service._format_wellness_breakdown(). */
+function WellnessBreakdownRow({ item, index }) {
+  const pct = item.max_points ? Math.round((item.points / item.max_points) * 100) : 0;
+  return (
+    <motion.div
+      className="wb-row"
+      variants={fadeUp}
+      custom={index}
+      initial="hidden"
+      animate="visible"
+    >
+      <div className="wb-row-top">
+        <span className="wb-label">{item.label}</span>
+        <span className="wb-points">
+          {item.points}/{item.max_points} pts
+        </span>
+      </div>
+      <div className="wb-bar-track">
+        <div className="wb-bar-fill" style={{ width: `${pct}%` }} />
+      </div>
     </motion.div>
   );
 }
@@ -230,6 +295,15 @@ export default function Reports() {
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // Insights section state — intentionally decoupled from the
+  // analytics loading/error state above. The insights endpoint is a
+  // separate call (GET /analytics/insights) with its own failure mode;
+  // it must never block or blank the rest of Reports, which renders from
+  // `analytics` alone.
+  const [insights, setInsights] = useState(null); // null = still loading
+  const [insightsSource, setInsightsSource] = useState(null);
+  const [insightsError, setInsightsError] = useState(false);
 
   // BUG FIX: useLocation() lets us detect when the user navigates back to
   // this route via client-side routing (e.g. clicking the sidebar link).
@@ -242,6 +316,7 @@ export default function Reports() {
   // runs every time the Reports route is activated, not just on initial mount.
   useEffect(() => {
     fetchAnalytics();
+    fetchInsights();
   }, [location.pathname]);
 
   const fetchAnalytics = async () => {
@@ -262,6 +337,22 @@ export default function Reports() {
       setError("Unable to load reports. Please try again.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Structured, grounded insights already computed server-side — see
+  // ai_insight_service.py. No AI call and no analytics calculation happens
+  // on the frontend; this only fetches and renders.
+  const fetchInsights = async () => {
+    setInsights(null);
+    setInsightsError(false);
+    try {
+      const data = await getInsights();
+      setInsights(data?.insights ?? []);
+      setInsightsSource(data?.source ?? null);
+    } catch (err) {
+      console.error("Insights Error:", err);
+      setInsightsError(true);
     }
   };
 
@@ -340,8 +431,10 @@ export default function Reports() {
   // daily_comparison provides all trend directions — no fabricated values.
   const dc = analytics.daily_comparison ?? {};
 
-  // ai_suggestions are generated by the backend from real data — not hardcoded.
-  const suggestions = analytics.ai_suggestions ?? [];
+  // Per-component wellness score breakdown — already computed backend-side
+  // (analytics_service._format_wellness_breakdown()). Never recalculated
+  // here, only rendered.
+  const wellnessBreakdown = analytics.wellness_breakdown ?? [];
 
   // BUG FIX: Read overall_avg_daily_steps directly from the analytics response.
   // Previously ?? 0 masked null/undefined, causing "0" to display even when
@@ -675,9 +768,11 @@ export default function Reports() {
             </div>
           </motion.div>
 
-          {/* AI Suggestions — rendered from backend data, never hardcoded */}
+          {/* Wellness Score Breakdown — explains the hero score ring above
+              using the backend's existing per-component breakdown. No
+              score math happens here, only display. */}
           <motion.div
-            className="analytics-card suggestions-card"
+            className="analytics-card"
             variants={fadeUp}
             custom={2}
             initial="hidden"
@@ -686,31 +781,82 @@ export default function Reports() {
             <div className="analytics-card-header">
               <div
                 className="analytics-card-icon-wrap"
-                style={{ background: "#8B5CF615" }}
+                style={{ background: "#EF444415" }}
               >
-                <Zap size={16} style={{ color: "#8B5CF6" }} />
+                <Heart size={16} style={{ color: "#EF4444" }} />
               </div>
               <div>
-                <h3 className="analytics-card-title">AI Suggestions</h3>
-                <p className="analytics-card-sub">
-                  Personalised recommendations
-                </p>
+                <h3 className="analytics-card-title">Wellness Score Breakdown</h3>
+                <p className="analytics-card-sub">Where your score comes from</p>
               </div>
             </div>
 
-            <div className="suggestions-list">
-              {suggestions.length > 0 ? (
-                suggestions.map((s, i) => (
-                  <SuggestionItem key={`suggestion-${i}`} text={s} index={i} />
-                ))
-              ) : (
-                <p className="empty-state-text">
-                  No suggestions available yet.
-                </p>
-              )}
-            </div>
+            {wellnessBreakdown.length > 0 ? (
+              <div className="wb-list">
+                {wellnessBreakdown.map((item, i) => (
+                  <WellnessBreakdownRow key={item.component} item={item} index={i} />
+                ))}
+              </div>
+            ) : (
+              <p className="empty-state-text">
+                No score breakdown available yet.
+              </p>
+            )}
           </motion.div>
+
         </div>
+
+        {/* ── AI INSIGHTS (full-width — was previously the 4th card
+            crammed into reports-bottom-grid's 3-column grid, which left
+            it stranded alone in column 1 of an otherwise-empty row.
+            Pulling it into its own full-width section with its own
+            internal grid is what actually fixes that. ── */}
+        <motion.section
+          className="reports-section"
+          variants={fadeUp}
+          custom={2}
+          initial="hidden"
+          animate="visible"
+        >
+          <div className="section-header">
+            <h2 className="section-title">AI Insights</h2>
+            <p className="section-subtitle">
+              {insightsSource === "fallback"
+                ? "Rule-based — AI temporarily unavailable"
+                : "Evidence-based, personalised guidance"}
+            </p>
+          </div>
+
+          {insights === null && !insightsError && (
+            <p className="empty-state-text">Analyzing your data…</p>
+          )}
+
+          {insightsError && (
+            <p className="empty-state-text">
+              AI insights are temporarily unavailable. The rest of your
+              report is unaffected.
+            </p>
+          )}
+
+          {!insightsError && insights !== null && insights.length === 0 && (
+            <p className="empty-state-text">
+              No insights yet — log a workout or habit entry to unlock
+              personalized guidance.
+            </p>
+          )}
+
+          {!insightsError && insights && insights.length > 0 && (
+            <div className="insight-cards-grid">
+              {insights.map((ins, i) => (
+                <InsightCard
+                  key={`${ins.category}-${ins.title}-${i}`}
+                  insight={ins}
+                  index={i}
+                />
+              ))}
+            </div>
+          )}
+        </motion.section>
       </div>
     </DashboardLayout>
   );

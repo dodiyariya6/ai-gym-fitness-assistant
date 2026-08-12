@@ -1,7 +1,7 @@
 //src/services/api.js
 /*
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: api.js
 
@@ -71,6 +71,19 @@ api.interceptors.request.use(
 
   }
 
+);
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      localStorage.removeItem("token");
+      if (window.location.pathname !== "/" && window.location.pathname !== "/register") {
+        window.location.href = "/";
+      }
+    }
+    return Promise.reject(error);
+  }
 );
 
 export default api;

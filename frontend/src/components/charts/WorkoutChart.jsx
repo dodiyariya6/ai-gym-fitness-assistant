@@ -1,7 +1,7 @@
 // src/components/charts/WorkoutChart.jsx
 /*
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: WorkoutChart.jsx
 

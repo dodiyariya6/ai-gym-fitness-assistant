@@ -1,7 +1,7 @@
 // src/components/common/Sidebar.jsx
 /*
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: Sidebar.jsx
 
@@ -40,6 +40,7 @@ import {
   User,
   MapPin,
 } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
 
 const menuItems = [
   { title: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
@@ -70,12 +71,13 @@ const navItemVariants = {
   },
 };
 
-function NavItem({ path, icon: Icon, title }) {
+function NavItem({ path, icon: Icon, title, onNavigate }) {
   return (
     <motion.div variants={navItemVariants}>
       <NavLink
         to={path}
         className={({ isActive }) => `sidebar-link${isActive ? " active" : ""}`}
+        onClick={onNavigate}
       >
         {({ isActive }) => (
           <>
@@ -97,17 +99,25 @@ function NavItem({ path, icon: Icon, title }) {
   );
 }
 
-export default function Sidebar() {
+export default function Sidebar({ isOpen = false, onClose } = {}) {
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
+    logout();
+    onClose?.();
     navigate("/");
   };
 
+  // Mobile drawer: dismiss the sidebar after the user taps a nav link so
+  // they land on the new page without the drawer still covering it.
+  // No-op on desktop — `sidebar--open` only has a visual effect under the
+  // 768px breakpoint (see sidebar.css), so calling this there is harmless.
+  const handleNavigate = () => onClose?.();
+
   return (
     <motion.aside
-      className="sidebar"
+      className={`sidebar${isOpen ? " sidebar--open" : ""}`}
       variants={sidebarVariants}
       initial="hidden"
       animate="visible"
@@ -133,8 +143,8 @@ export default function Sidebar() {
           </svg>
         </div>
         <div className="sidebar-logo-text">
-          <span className="logo-name">AI Gym</span>
-          <span className="logo-tagline">Fitness Assistant</span>
+          <span className="logo-name">IFA</span>
+          <span className="logo-tagline">Intelligent Fitness Assistant</span>
         </div>
       </div>
 
@@ -147,7 +157,7 @@ export default function Sidebar() {
           animate="visible"
         >
           {menuItems.map((item) => (
-            <NavItem key={item.path} {...item} />
+            <NavItem key={item.path} {...item} onNavigate={handleNavigate} />
           ))}
         </motion.nav>
       </div>
@@ -160,7 +170,12 @@ export default function Sidebar() {
           initial="hidden"
           animate="visible"
         >
-          <NavItem path="/profile" icon={User} title="Profile" />
+          <NavItem
+            path="/profile"
+            icon={User}
+            title="Profile"
+            onNavigate={handleNavigate}
+          />
         </motion.nav>
 
         <div className="sidebar-divider" />

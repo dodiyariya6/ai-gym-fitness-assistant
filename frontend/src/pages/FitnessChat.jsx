@@ -1,7 +1,7 @@
 // src/pages/FitnessChat.jsx
 /*
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: FitnessChat.jsx
 
@@ -47,7 +47,11 @@ import {
 
 import DashboardLayout from "../layouts/DashboardLayout";
 
-import { sendMessage } from "../services/chatService";
+import {
+  sendMessage,
+  getChatSessions,
+  getChatSessionMessages,
+} from "../services/chatService";
 
 /* ================================================
    Markdown Renderer
@@ -337,6 +341,11 @@ export default function FitnessChat() {
 
   const [loading, setLoading] = useState(false);
 
+  // Persisted conversation this session belongs to (backend chat memory —
+  // see chat_service.py). null = no conversation started yet; the first
+  // sendMessage() call creates one server-side and we adopt its id.
+  const [sessionId, setSessionId] = useState(null);
+
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -345,10 +354,42 @@ export default function FitnessChat() {
     });
   }, [messages, loading]);
 
+  // On mount, resume the user's most recent conversation (if any) instead
+  // of always starting blank — the backend already persists history, this
+  // just surfaces it. Failure here is silent: the chat still works, it
+  // just starts a fresh conversation.
+  useEffect(() => {
+    (async () => {
+      try {
+        const sessions = await getChatSessions();
+        if (!sessions?.length) return;
+
+        const latest = sessions[0];
+        const full = await getChatSessionMessages(latest.id);
+        if (!full?.messages?.length) return;
+
+        setSessionId(full.id);
+        setMessages(
+          full.messages.map((m) => ({
+            sender: m.role === "user" ? "user" : "ai",
+            text: m.content,
+            ts: new Date(m.created_at).getTime(),
+          })),
+        );
+      } catch (error) {
+        console.error("Chat History Load Error:", error);
+      }
+    })();
+  }, []);
+
   const clearChat = () => {
     setMessages([WELCOME_MSG]);
 
     setInput("");
+
+    // Starting a new conversation — the next sendMessage() call creates a
+    // fresh session server-side instead of continuing the old one.
+    setSessionId(null);
   };
 
   const handleSend = async () => {
@@ -373,11 +414,15 @@ export default function FitnessChat() {
     setLoading(true);
 
     try {
-      const response = await sendMessage(userText);
+      const response = await sendMessage(userText, sessionId);
 
       const aiReply = response?.reply
         ? response.reply
         : "No response received.";
+
+      if (response?.session_id) {
+        setSessionId(response.session_id);
+      }
 
       setMessages((prev) => [
         ...prev,

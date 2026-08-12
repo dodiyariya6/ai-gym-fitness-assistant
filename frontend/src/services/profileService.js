@@ -1,7 +1,7 @@
 // src/services/profileService.js
 /*
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: profileService.js
 
@@ -25,57 +25,57 @@ Profile page
 Dietician page
 Dashboard page
 GymFinder page
+Habits page
 
 ==================================================
 */
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
+import api from "./api";
 
-function authHeaders() {
-  const token = localStorage.getItem("token");
-  return {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
-  };
-}
+// Migrated from raw fetch() to the shared axios client (api.js) so this
+// service gets the same automatic Authorization header injection and the
+// same global 401 handling as every other authenticated request, instead of
+// duplicating that logic here. Public function signatures, return shapes,
+// and thrown-error messages are unchanged.
 
 export async function getProfile() {
-  const res = await fetch(`${API_BASE}/profile/me`, {
-    headers: authHeaders(),
-  });
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error("Failed to fetch profile");
-  return res.json();
+  try {
+    const res = await api.get("/profile/me");
+    return res.data;
+  } catch (error) {
+    if (error.response?.status === 404) return null;
+    throw new Error("Failed to fetch profile", { cause: error });
+  }
 }
 
 export async function saveProfile(data) {
-  const res = await fetch(`${API_BASE}/profile/`, {
-    method: "POST",
-    headers: authHeaders(),
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || "Failed to save profile");
+  try {
+    const res = await api.post("/profile/", data);
+    return res.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.detail || "Failed to save profile", {
+      cause: error,
+    });
   }
-  return res.json();
 }
 
 export async function generateTargets() {
-  const res = await fetch(`${API_BASE}/profile/targets`, {
-    headers: authHeaders(),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || "Failed to generate targets");
+  try {
+    const res = await api.get("/profile/targets");
+    return res.data;
+  } catch (error) {
+    throw new Error(
+      error.response?.data?.detail || "Failed to generate targets",
+      { cause: error },
+    );
   }
-  return res.json();
 }
 
 export async function getStoredTargets() {
-  const res = await fetch(`${API_BASE}/profile/targets/stored`, {
-    headers: authHeaders(),
-  });
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error("Failed to fetch targets");
-  return res.json();
+  try {
+    const res = await api.get("/profile/targets/stored");
+    return res.data;
+  } catch (error) {
+    if (error.response?.status === 404) return null;
+    throw new Error("Failed to fetch targets", { cause: error });
+  }
 }

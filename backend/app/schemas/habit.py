@@ -1,7 +1,7 @@
 # app/schemas/habit.py
 """
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: habit.py
 

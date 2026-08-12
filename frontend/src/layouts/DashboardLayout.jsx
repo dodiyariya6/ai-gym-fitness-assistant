@@ -1,7 +1,7 @@
 // src/layouts/DashboardLayout.jsx
 /*
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: DashboardLayout.jsx
 
@@ -36,6 +36,7 @@ Gym Finder page
 ==================================================
 */
 import { useState, useEffect } from "react";
+import { Outlet } from "react-router-dom";
 import Sidebar from "../components/common/Sidebar";
 import Navbar from "../components/common/Navbar";
 
@@ -62,6 +63,16 @@ export default function DashboardLayout({ children }) {
     };
   }, [sidebarOpen]);
 
+  // Escape closes the mobile sidebar drawer.
+  useEffect(() => {
+    if (!sidebarOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") setSidebarOpen(false);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [sidebarOpen]);
+
   return (
     <div className="layout">
       {sidebarOpen && (
@@ -78,7 +89,7 @@ export default function DashboardLayout({ children }) {
         <Navbar onMenuToggle={() => setSidebarOpen((prev) => !prev)} />
 
         <main className="page-content" aria-label="Main content">
-          {children}
+          {children || <Outlet />}
         </main>
       </div>
     </div>

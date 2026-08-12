@@ -1,7 +1,7 @@
 # app/schemas/consistency.py
 """
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: consistency.py
 

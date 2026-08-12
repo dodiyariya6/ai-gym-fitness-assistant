@@ -1,7 +1,7 @@
 // src/services/workoutService.js
 /*
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: workoutService.js
 
@@ -74,6 +74,30 @@ export const getWorkoutHistory = async () => {
     );
 
     return response.data;
+
+  }
+
+  catch (error) {
+
+    console.error(
+
+      "Workout Service Error:",
+
+      error
+
+    );
+
+    throw error;
+
+  }
+
+};
+
+export const deleteWorkout = async (workoutId) => {
+
+  try {
+
+    await api.delete(`/workout/${workoutId}`);
 
   }
 

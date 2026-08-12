@@ -537,19 +537,22 @@
   color: #991b1b;
 }
 
-/* ── AI Suggestions ──────────────────────────────── */
+/* ── AI Insights (GET /analytics/insights) ─────────
+   Full-width section (see Reports.jsx) with its own internal grid —
+   previously these cards lived inside reports-bottom-grid alongside 3
+   other cards, so as the 4th/last item in a 3-column auto-fit grid it was
+   stranded alone in column 1 of its own row, with columns 2-3 empty.
+   Promoting AI Insights to its own reports-section fixes that; this grid
+   is what makes individual insight cards use the freed-up width. */
 
-.suggestions-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+.insight-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
 }
 
-.suggestion-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 14px 16px;
+.insight-card-item {
+  padding: 16px 18px;
   background: #fafafa;
   border: 1px solid #f3f4f6;
   border-radius: 16px;
@@ -558,25 +561,102 @@
     border-color 0.18s ease;
 }
 
-.suggestion-item:hover {
+.insight-card-item:hover {
   background: #f5f3ff;
   border-color: #ddd6fe;
 }
 
-.suggestion-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #8b5cf6;
-  flex-shrink: 0;
-  margin-top: 5px;
+.insight-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
-.suggestion-text {
+.insight-category-chip {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6b7280;
+  background: #eef2ff;
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+.insight-card-title {
   font-size: 0.875rem;
-  color: #374151;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 6px;
+}
+
+.insight-card-line {
+  font-size: 0.8125rem;
+  color: #4b5563;
   line-height: 1.55;
-  margin: 0;
+  margin: 0 0 4px;
+}
+
+.insight-card-line-label {
+  font-weight: 600;
+  color: #374151;
+}
+
+.insight-card-recommendation {
+  margin-bottom: 0;
+}
+
+.insight-card-action-tag {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #4338ca;
+  background: #eef2ff;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+/* ── Wellness Score Breakdown ─────────────────────── */
+
+.wb-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.wb-row-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.wb-label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.wb-points {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #9ca3af;
+}
+
+.wb-bar-track {
+  height: 6px;
+  border-radius: 999px;
+  background: #f3f4f6;
+  overflow: hidden;
+}
+
+.wb-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: #ef4444;
 }
 
 /* ── Reduced Motion ──────────────────────────────── */
@@ -585,7 +665,7 @@
   .kpi-card,
   .analytics-card,
   .btn-retry,
-  .suggestion-item {
+  .insight-card-item {
     transition: none;
     transform: none;
   }
@@ -626,6 +706,11 @@
 
   .reports-bottom-grid {
     grid-template-columns: 1fr;
+  }
+
+  /* Tablet — 2 columns where there's room, collapsing to 1 as it narrows. */
+  .insight-cards-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   }
 }
 
@@ -668,6 +753,11 @@
   .insight-right {
     gap: 6px;
   }
+
+  /* Mobile — single column, one card per row. */
+  .insight-cards-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 600px) {
@@ -692,7 +782,7 @@
     gap: 16px;
   }
 
-  .suggestion-item {
+  .insight-card-item {
     padding: 12px 14px;
   }
 }

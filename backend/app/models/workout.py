@@ -1,7 +1,7 @@
 # app/models/workout.py
 """
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: workout.py
 
@@ -31,7 +31,7 @@ wellness score calculation
 ==================================================
 """
 
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Date, DateTime, ForeignKey
 from sqlalchemy.sql import func
 from app.database import Base
 
@@ -40,7 +40,7 @@ class Workout(Base):
     __tablename__ = "workouts"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     exercise_name = Column(String, nullable=False)
     sets = Column(Integer, default=0)
     reps = Column(Integer, default=0)
@@ -52,7 +52,7 @@ class Workout(Base):
     form_score = Column(Integer, nullable=True, default=None)
 
     notes = Column(String, default="")
-    workout_date = Column(String, nullable=False)
+    workout_date = Column(Date, nullable=False, index=True)
     created_at = Column(
         DateTime(timezone=True),
         server_default=func.now(),

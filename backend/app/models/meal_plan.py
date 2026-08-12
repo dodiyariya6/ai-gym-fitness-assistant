@@ -1,7 +1,7 @@
 # app/models/meal_plan.py
 """
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: meal_plan.py
 
@@ -28,14 +28,8 @@ reports system
 ==================================================
 """
 
-from datetime import datetime
-
-from sqlalchemy import Column
-from sqlalchemy import Integer
-from sqlalchemy import String
-from sqlalchemy import Text
-from sqlalchemy import DateTime
-from sqlalchemy import ForeignKey
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
+from sqlalchemy.sql import func
 
 from app.database import Base
 
@@ -46,7 +40,7 @@ class MealPlan(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
 
     goal = Column(String, nullable=False)
 
@@ -56,4 +50,7 @@ class MealPlan(Base):
 
     grocery_list = Column(Text, nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+    )

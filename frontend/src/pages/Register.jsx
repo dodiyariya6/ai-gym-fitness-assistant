@@ -1,7 +1,7 @@
 // src/pages/Register.jsx
 /*
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: Register.jsx
 
@@ -31,9 +31,14 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
 import { registerUser } from "../services/authService";
+import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
+import { resolvePostAuthDestination } from "../utils/postAuthRedirect";
 
 export default function Register() {
   const navigate = useNavigate();
+  const { login } = useAuth();
+  const { toast } = useToast();
 
   const [loading, setLoading] = useState(false);
 
@@ -71,11 +76,20 @@ export default function Register() {
         throw new Error("Please fill all fields.");
       }
 
-      await registerUser(payload);
+      const response = await registerUser(payload);
 
-      alert("Registration successful. Please login.");
+      if (!response?.access_token) {
+        throw new Error("Invalid registration response");
+      }
 
-      navigate("/");
+      // Auto-authenticate — no redundant second manual login right after
+      // the user just registered.
+      login(response.access_token);
+
+      toast.success("Welcome! Let's set up your profile.");
+
+      const destination = await resolvePostAuthDestination();
+      navigate(destination, { replace: true });
     } catch (error) {
       console.error(
         "Registration Error:",
@@ -83,7 +97,7 @@ export default function Register() {
         error,
       );
 
-      alert(
+      toast.error(
         error.response?.data?.detail ||
           error.message ||
           "Registration failed. Please try again.",
@@ -96,10 +110,18 @@ export default function Register() {
   return (
     <div className="auth-container">
       <form className="auth-form" onSubmit={handleSubmit}>
+        <div className="auth-brand">
+          <span className="auth-brand-mark">IFA</span>
+          <span className="auth-brand-full">Intelligent Fitness Assistant</span>
+          <span className="auth-brand-tagline">
+            Your Personal AI Gym &amp; Fitness Assistant
+          </span>
+        </div>
+
         <div>
           <h1>Register</h1>
 
-          <p>Create your AI Gym account</p>
+          <p>Create your account</p>
         </div>
 
         <input

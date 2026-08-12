@@ -1,7 +1,7 @@
 // src/pages/Workout.jsx
 /*
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: Workout.jsx
 
@@ -48,11 +48,19 @@ import {
   Minus,
   History as HistoryIcon,
   Send,
+  Trash2,
 } from "lucide-react";
 
 import DashboardLayout from "../layouts/DashboardLayout";
 
-import { saveWorkout, getWorkoutHistory } from "../services/workoutService";
+import {
+  saveWorkout,
+  getWorkoutHistory,
+  deleteWorkout,
+} from "../services/workoutService";
+import { getProgressiveOverload } from "../services/analyticsService";
+import { useToast } from "../context/ToastContext";
+import ConfirmDialog from "../components/common/ConfirmDialog";
 
 import "../styles/workout.css";
 
@@ -203,7 +211,7 @@ function formatDuration(raw) {
   return `${num} min`;
 }
 
-function HistoryEntry({ workout, index }) {
+function HistoryEntry({ workout, index, onDelete }) {
   const hasFormScore =
     workout.form_score !== null &&
     workout.form_score !== undefined &&
@@ -234,13 +242,24 @@ function HistoryEntry({ workout, index }) {
             <span>{workout.exercise_name}</span>
           </div>
 
-          <span
-            className="form-score-badge"
-            style={{ color: scoreColor, borderColor: scoreColor }}
-          >
-            <Target size={12} />
-            {hasFormScore ? `${workout.form_score}%` : "N/A"}
-          </span>
+          <div className="workout-timeline-header-actions">
+            <span
+              className="form-score-badge"
+              style={{ color: scoreColor, borderColor: scoreColor }}
+            >
+              <Target size={12} />
+              {hasFormScore ? `${workout.form_score}%` : "N/A"}
+            </span>
+            <button
+              type="button"
+              className="timeline-delete-btn"
+              onClick={() => onDelete(workout)}
+              title="Delete this workout"
+              aria-label={`Delete workout ${workout.exercise_name}`}
+            >
+              <Trash2 size={14} />
+            </button>
+          </div>
         </div>
 
         <div className="workout-timeline-grid">
@@ -279,15 +298,66 @@ function HistoryEntry({ workout, index }) {
 }
 
 /* ================================================
+   Coach Notes — deterministic per-exercise progressive
+   overload trend (GET /analytics/progressive-overload).
+   No AI call: same finding data ai_insight_service already
+   computes internally, exposed directly and uncapped so
+   every logged exercise shows here, not just whichever
+   made the capped /analytics/insights top-6.
+================================================ */
+
+const OVERLOAD_STATUS_LABELS = {
+  improving: { label: "Improving", cls: "overload-status--improving" },
+  plateau: { label: "Plateau", cls: "overload-status--plateau" },
+  declining: { label: "Declining", cls: "overload-status--declining" },
+  insufficient_data: { label: "Not enough data", cls: "overload-status--neutral" },
+};
+
+function OverloadRow({ finding, index }) {
+  const status =
+    OVERLOAD_STATUS_LABELS[finding.rep_status] || OVERLOAD_STATUS_LABELS.insufficient_data;
+
+  return (
+    <motion.div
+      className="overload-row"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: Math.min(index * 0.04, 0.3), ease: "easeInOut" }}
+    >
+      <div className="overload-row-top">
+        <span className="overload-exercise">{finding.exercise}</span>
+        <span className={`overload-status ${status.cls}`}>
+          {status.label}
+          {finding.inactive && " · Inactive"}
+        </span>
+      </div>
+      <p className="overload-evidence">{finding.evidence}</p>
+    </motion.div>
+  );
+}
+
+/* ================================================
    Main Page
 ================================================ */
 
 export default function Workout() {
+  const { toast } = useToast();
+
   const [history, setHistory] = useState([]);
 
   const [loading, setLoading] = useState(false);
 
   const [pendingWorkout, setPendingWorkout] = useState(null);
+
+  // Delete-confirmation state — target holds the workout pending deletion
+  // (or null when the dialog is closed). Covers both manual and
+  // webcam-generated workouts identically — they're the same record type.
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+
+  // Coach Notes — independent of history loading; a failed/slow call here
+  // never blocks the rest of the page.
+  const [overloadFindings, setOverloadFindings] = useState(null);
 
   const [formData, setFormData] = useState({
     exercise_name: "",
@@ -308,6 +378,19 @@ export default function Workout() {
     loadHistory();
   }, []);
 
+  useEffect(() => {
+    loadOverloadFindings();
+  }, []);
+
+  const loadOverloadFindings = async () => {
+    try {
+      const data = await getProgressiveOverload();
+      setOverloadFindings(Array.isArray(data) ? data : []);
+    } catch {
+      setOverloadFindings([]);
+    }
+  };
+
   const loadHistory = async () => {
     try {
       const data = await getWorkoutHistory();
@@ -327,7 +410,7 @@ export default function Workout() {
   // Step 1: validate and move to preview — no DB write yet.
   const handlePreview = () => {
     if (!formData.exercise_name || !formData.sets || !formData.reps) {
-      alert("Please fill all required fields.");
+      toast.warning("Please fill all required fields.");
       return;
     }
 
@@ -335,7 +418,7 @@ export default function Workout() {
     // Blocks future dates even if the user bypasses the max= constraint
     // via DevTools or direct input manipulation.
     if (formData.workout_date > todayLocalString()) {
-      alert("You cannot log a workout for a future date.");
+      toast.warning("You cannot log a workout for a future date.");
       return;
     }
 
@@ -356,6 +439,7 @@ export default function Workout() {
       setLoading(true);
       await saveWorkout(pendingWorkout);
       await loadHistory();
+      loadOverloadFindings();
       setPendingWorkout(null);
       setFormData({
         exercise_name: "",
@@ -368,7 +452,7 @@ export default function Workout() {
       });
     } catch (error) {
       console.error("Workout Save Error:", error);
-      alert("Unable to save workout.");
+      toast.error("Unable to save workout.");
     } finally {
       setLoading(false);
     }
@@ -377,6 +461,38 @@ export default function Workout() {
   // Step 2b: user discards — return to form, data preserved for correction.
   const handleDiscard = () => {
     setPendingWorkout(null);
+  };
+
+  const handleDeleteRequest = (workout) => {
+    setDeleteTarget(workout);
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteTarget(null);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
+    try {
+      setDeleting(true);
+      await deleteWorkout(deleteTarget.id);
+      toast.success("Workout deleted.");
+      setDeleteTarget(null);
+      await loadHistory();
+      loadOverloadFindings();
+    } catch (error) {
+      if (error?.response?.status === 404) {
+        toast.warning("This workout was already removed.");
+        setDeleteTarget(null);
+        await loadHistory();
+        loadOverloadFindings();
+      } else {
+        console.error("Workout Delete Error:", error);
+        toast.error("Unable to delete workout.");
+      }
+    } finally {
+      setDeleting(false);
+    }
   };
 
   // ISSUE 3 FIX: calories shown in the hero and stat card must reflect only
@@ -506,6 +622,29 @@ export default function Workout() {
             index={2}
           />
         </div>
+
+        {/* ───────────────── Coach Notes ─────────────────
+            Deterministic, no-AI-call, per-exercise overload trend (see
+            GET /analytics/progressive-overload). Every logged exercise,
+            not capped like the shared insights list. */}
+        {overloadFindings && overloadFindings.length > 0 && (
+          <motion.div
+            className="workout-form-card"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, delay: 0.08, ease: "easeInOut" }}
+          >
+            <div className="workout-form-header">
+              <h2>Coach Notes</h2>
+              <p>How each exercise is trending, session over session.</p>
+            </div>
+            <div className="overload-list">
+              {overloadFindings.map((finding, i) => (
+                <OverloadRow key={finding.exercise} finding={finding} index={i} />
+              ))}
+            </div>
+          </motion.div>
+        )}
 
         {/* ───────────────── Log Form ───────────────── */}
         <motion.div
@@ -738,11 +877,27 @@ export default function Workout() {
                   key={workout.id ?? `${workout.exercise_name}-${idx}`}
                   workout={workout}
                   index={idx}
+                  onDelete={handleDeleteRequest}
                 />
               ))}
             </div>
           )}
         </div>
+
+        {/* ───────────────── Delete Confirmation ───────────────── */}
+        <ConfirmDialog
+          open={!!deleteTarget}
+          title="Delete workout?"
+          message={
+            deleteTarget
+              ? `This removes "${deleteTarget.exercise_name}" from ${deleteTarget.workout_date} and updates your stats, trends and insights accordingly. This can't be undone.`
+              : ""
+          }
+          confirmLabel="Delete Workout"
+          loading={deleting}
+          onConfirm={handleDeleteConfirm}
+          onCancel={handleDeleteCancel}
+        />
       </div>
     </DashboardLayout>
   );

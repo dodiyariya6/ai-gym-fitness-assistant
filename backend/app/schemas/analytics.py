@@ -1,7 +1,7 @@
 # app/schemas/analytics.py
 """
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: analytics.py  (schemas)
 
@@ -18,6 +18,28 @@ the frontend.
 
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel
+
+
+class OverloadFinding(BaseModel):
+    """
+    One exercise's deterministic progressive-overload trend — see
+    progressive_overload_service.analyze_progressive_overload(). No AI call;
+    this is the same finding data ai_insight_service already computes,
+    exposed directly and uncapped for the Workout page (the cached
+    /analytics/insights endpoint only surfaces up to 6 insights total across
+    every category, so a busy user's less-prioritized exercises may never
+    appear there).
+    """
+
+    exercise: str
+    sessions_count: int
+    rep_sequence: List[int]
+    volume_sequence: List[int]
+    rep_status: str
+    volume_status: str
+    days_since_last_session: int
+    inactive: bool
+    evidence: str
 
 
 class DailyComparison(BaseModel):
@@ -57,6 +79,11 @@ class AnalyticsResponse(BaseModel):
 
     # ── Wellness / health score ──────────────────────────────────────────────
     health_score: int
+
+    # ── Per-component wellness score breakdown (P2.11 explanation support) ──
+    # Display-only — never changes health_score, which is still the single
+    # source of truth. See analytics_service._format_wellness_breakdown().
+    wellness_breakdown: Optional[List[Dict[str, Any]]] = None
 
     # ── Trend directions (up / down / neutral / None) ────────────────────────
     daily_comparison: DailyComparison

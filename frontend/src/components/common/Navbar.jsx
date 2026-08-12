@@ -1,7 +1,7 @@
 // src/components/common/Navbar.jsx
 /*
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: Navbar.jsx
 
@@ -30,9 +30,9 @@ Main application layout
 */
 import { motion } from "framer-motion";
 
-import { Calendar } from "lucide-react";
+import { Calendar, Menu } from "lucide-react";
 
-export default function Navbar() {
+export default function Navbar({ onMenuToggle }) {
   const today = new Date().toLocaleDateString("en-IN", {
     day: "numeric",
     month: "long",
@@ -50,9 +50,19 @@ export default function Navbar() {
       }}
     >
       <div className="navbar-left">
-        <h2 className="navbar-title">AI Gym &amp; Fitness Assistant</h2>
+        {/* Hidden on desktop, shown on mobile — see .navbar-menu-btn in navbar.css */}
+        <button
+          type="button"
+          className="navbar-menu-btn"
+          onClick={onMenuToggle}
+          aria-label="Toggle navigation menu"
+        >
+          <Menu size={18} strokeWidth={1.8} />
+        </button>
 
-        <p className="navbar-subtitle">Track &bull; Train &bull; Improve</p>
+        <h2 className="navbar-title">IFA</h2>
+
+        <p className="navbar-subtitle">Intelligent Fitness Assistant</p>
       </div>
 
       <div className="navbar-right">

@@ -1,7 +1,7 @@
 // src/pages/Webcam.jsx
 /*
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: Webcam.jsx
 
@@ -10,7 +10,8 @@ Provides an AI-powered webcam trainer
 for real-time exercise analysis.
 
 Functionality:
-- Launches webcam sessions.
+- Requests the visitor's own camera via getUserMedia.
+- Runs MediaPipe pose detection entirely in the browser.
 - Supports exercise selection.
 - Tracks repetitions.
 - Tracks workout duration.
@@ -19,6 +20,18 @@ Functionality:
 - Displays session summaries.
 - Saves completed workouts.
 - Supports responsive layouts.
+
+Architecture note (why this file looks the way it does):
+This used to call GET /pose/start and the BACKEND opened a camera with
+cv2.VideoCapture(0) — meaning it only ever worked against whichever
+machine ran the FastAPI process. A deployed backend (Render) has no
+camera or display, so that endpoint was hard-disabled in production. Pose
+detection now runs client-side (getUserMedia + MediaPipe Tasks Vision),
+using every visitor's own camera. The rep-counting/form-scoring logic is
+an intentional line-for-line port of the old backend services — see
+utils/exerciseCounters.js — so behavior is unchanged, only where it runs.
+Workout persistence is untouched: the finished session still goes through
+the same saveWorkout()/POST /workout/save contract used everywhere else.
 
 Responsibilities:
 Live workout tracking
@@ -31,11 +44,13 @@ Webcam page
 
 ==================================================
 */
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { FilesetResolver, PoseLandmarker, DrawingUtils } from "@mediapipe/tasks-vision";
 import {
   Dumbbell,
   Play,
+  Square,
   CheckCircle2,
   XCircle,
   Activity,
@@ -43,15 +58,25 @@ import {
   Clock,
   Target,
   Award,
-  ChevronDown,
-  Keyboard,
   Sparkles,
   TrendingUp,
   RotateCcw,
+  VideoOff,
+  AlertTriangle,
+  ShieldCheck,
 } from "lucide-react";
 import DashboardLayout from "../layouts/DashboardLayout";
 import { saveWorkout } from "../services/workoutService";
+import { getProfile } from "../services/profileService";
+import { useToast } from "../context/ToastContext";
+import {
+  EXERCISE_COUNTERS,
+  calculateFormScore,
+  estimateCalories,
+  formatDuration,
+} from "../utils/exerciseCounters";
 import "../styles/webcam.css";
+
 /* ── Animation Variants ─────────────────────────── */
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -71,7 +96,7 @@ const scaleIn = {
   }),
 };
 
-/* ── Exercise meta ──────────────────────────────── */
+/* ── Exercise meta (display only — real logic lives in EXERCISE_COUNTERS) */
 const EXERCISES = [
   { value: "squat", label: "Squats", icon: Dumbbell },
   { value: "curl", label: "Bicep Curls", icon: Activity },
@@ -79,6 +104,52 @@ const EXERCISES = [
   { value: "lunge", label: "Lunges", icon: TrendingUp },
   { value: "jumpingjack", label: "Jumping Jacks", icon: Flame },
 ];
+
+// The .task model is fetched once from Google's public model CDN — this is
+// a client-side (visitor's browser) network request, unrelated to and
+// unaffected by anything the backend does. Cached at module scope so
+// switching exercises or starting a second session in the same browser
+// tab reuses the already-loaded detector instead of re-downloading it.
+const MODEL_URL =
+  "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task";
+const WASM_URL = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/wasm";
+let landmarkerPromise = null;
+function getPoseLandmarker() {
+  if (!landmarkerPromise) {
+    landmarkerPromise = FilesetResolver.forVisionTasks(WASM_URL).then((vision) =>
+      PoseLandmarker.createFromOptions(vision, {
+        baseOptions: { modelAssetPath: MODEL_URL, delegate: "GPU" },
+        runningMode: "VIDEO",
+        numPoses: 1,
+      }),
+    );
+  }
+  return landmarkerPromise;
+}
+
+// Maps getUserMedia's DOMException.name to the specific, actionable message
+// each denial/failure mode actually needs (section 9 of the production
+// hardening pass) — a single generic "camera error" isn't enough to tell a
+// user whether to change a browser setting, close another app, or give up.
+function describeCameraError(err) {
+  const name = err?.name;
+  if (name === "NotAllowedError" || name === "PermissionDeniedError") {
+    return "Camera access was denied. Allow camera permission for this site in your browser settings, then try again.";
+  }
+  if (name === "NotFoundError" || name === "DevicesNotFoundError") {
+    return "No camera was found on this device. Connect a camera and try again.";
+  }
+  if (name === "NotReadableError" || name === "TrackStartError") {
+    return "Your camera is already in use by another app or browser tab. Close it and try again.";
+  }
+  if (name === "OverconstrainedError") {
+    return "No camera on this device matches the required settings.";
+  }
+  if (name === "SecurityError") {
+    return "Camera access requires a secure (HTTPS) connection.";
+  }
+  return "Unable to access your camera. Please check your permissions and try again.";
+}
 
 /* ── Performance insight derivation ────────────── */
 function getPerformanceInsight(workout) {
@@ -112,58 +183,232 @@ function SummaryCard({ icon: Icon, label, value, color, index }) {
   );
 }
 
+const CAMERA_SUPPORTED =
+  typeof navigator !== "undefined" && !!navigator.mediaDevices?.getUserMedia;
+
 /* ── Main Component ─────────────────────────────── */
 export default function Webcam() {
+  const { toast } = useToast();
+
   const [exercise, setExercise] = useState("squat");
-  const [loading, setLoading] = useState(false);
+  const [phase, setPhase] = useState("launcher"); // launcher | requesting | live | error
+  const [cameraError, setCameraError] = useState("");
+  const [liveStats, setLiveStats] = useState({ count: 0, feedback: "" });
   const [pendingWorkout, setPendingWorkout] = useState(null);
 
-  /* ── unchanged logic ── */
-  const startSession = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(
-        `http://127.0.0.1:8000/pose/start?exercise=${exercise}`,
-      );
-      if (!response.ok) throw new Error();
-      const data = await response.json();
-      if (!data?.exercise_name) {
-        throw new Error("Invalid session response");
-      }
-      const today = new Date().toISOString().split("T")[0];
-      setPendingWorkout({
-        exercise_name: data.exercise_name,
-        sets: 1,
-        reps: data.reps,
-        duration: data.duration,
-        calories_burned: data.calories_burned,
-        form_score: data.form_score,
-        notes: "AI Webcam Session",
-        workout_date: today,
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const streamRef = useRef(null);
+  const rafRef = useRef(null);
+  const counterRef = useRef(null);
+  const startTimeRef = useRef(0);
+  const lastDataRef = useRef({ count: 0, angle: 0, state: "", feedback: "" });
+  const liveStatsRef = useRef(liveStats); // avoids re-subscribing the rAF loop to state changes
+  const drawingUtilsRef = useRef(null);
+  const errorStreakRef = useRef(0);
+  const landmarkerRef = useRef(null);
+  const bodyWeightRef = useRef(null);
+
+  useEffect(() => {
+    liveStatsRef.current = liveStats;
+  }, [liveStats]);
+
+  // Same body-weight lookup the old server-side flow did (pose.py read
+  // Profile.weight) — kept so calories_burned means the same thing
+  // whether logged manually, via the old flow, or via this one. Best
+  // effort only: a profile-less user still gets a session, just using
+  // estimateCalories()'s DEFAULT_BODY_WEIGHT_KG fallback.
+  useEffect(() => {
+    getProfile()
+      .then((profile) => {
+        bodyWeightRef.current = profile?.weight || null;
+      })
+      .catch(() => {
+        bodyWeightRef.current = null;
       });
+  }, []);
+
+  // Stops every media track and the detection loop — called on Stop, on
+  // discard, and on unmount/navigate-away so the camera never keeps
+  // running once the user isn't looking at this page.
+  const stopCamera = useCallback(() => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = null;
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+    if (videoRef.current) videoRef.current.srcObject = null;
+  }, []);
+
+  // Camera must stop even if the user navigates away mid-session rather
+  // than clicking Stop — React Router unmounts this component on route
+  // change, so cleanup here is the only guarantee.
+  useEffect(() => stopCamera, [stopCamera]);
+
+  // Held in a ref (rather than calling the useCallback binding recursively)
+  // so the rAF loop schedules its next tick through detectionLoopRef.current
+  // instead of closing over its own not-yet-assigned declaration.
+  const detectionLoopRef = useRef(null);
+
+  const detectionLoop = useCallback(() => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const landmarker = landmarkerRef.current;
+    if (!video || !canvas || !landmarker || video.readyState < 2) {
+      rafRef.current = requestAnimationFrame(() => detectionLoopRef.current());
+      return;
+    }
+
+    if (canvas.width !== video.videoWidth) canvas.width = video.videoWidth;
+    if (canvas.height !== video.videoHeight) canvas.height = video.videoHeight;
+    const ctx = canvas.getContext("2d");
+    if (!drawingUtilsRef.current) drawingUtilsRef.current = new DrawingUtils(ctx);
+
+    try {
+      const result = landmarker.detectForVideo(video, performance.now());
+      ctx.save();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const landmarks = result.landmarks?.[0];
+      if (landmarks) {
+        drawingUtilsRef.current.drawLandmarks(landmarks, {
+          radius: 3,
+          color: "#8B5CF6",
+        });
+        drawingUtilsRef.current.drawConnectors(
+          landmarks,
+          PoseLandmarker.POSE_CONNECTIONS,
+          { color: "#6366F1", lineWidth: 3 },
+        );
+
+        const data = counterRef.current.process(landmarks);
+        lastDataRef.current = data;
+        errorStreakRef.current = 0;
+
+        const prev = liveStatsRef.current;
+        if (data.count !== prev.count || data.feedback !== prev.feedback) {
+          setLiveStats({ count: data.count, feedback: data.feedback });
+        }
+      }
+      ctx.restore();
+    } catch {
+      // A handful of individual bad frames (e.g. momentary decode hiccup)
+      // is normal and should not interrupt the session — only surface an
+      // error if detection fails persistently.
+      errorStreakRef.current += 1;
+      if (errorStreakRef.current > 90) {
+        setCameraError(
+          "Pose detection stopped unexpectedly. Please stop and restart the session.",
+        );
+        setPhase("error");
+        stopCamera();
+        return;
+      }
+    }
+
+    rafRef.current = requestAnimationFrame(() => detectionLoopRef.current());
+  }, [stopCamera]);
+
+  useEffect(() => {
+    detectionLoopRef.current = detectionLoop;
+  }, [detectionLoop]);
+
+  const startSession = async () => {
+    if (!CAMERA_SUPPORTED) {
+      setCameraError(
+        "Your browser doesn't support camera access. Try a recent version of Chrome, Edge, Firefox, or Safari.",
+      );
+      setPhase("error");
+      return;
+    }
+    if (typeof window !== "undefined" && window.isSecureContext === false) {
+      setCameraError("Camera access requires a secure (HTTPS) connection.");
+      setPhase("error");
+      return;
+    }
+
+    setPhase("requesting");
+    setCameraError("");
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user", width: { ideal: 960 }, height: { ideal: 720 } },
+        audio: false,
+      });
+      streamRef.current = stream;
+
+      const video = videoRef.current;
+      video.srcObject = stream;
+      await video.play();
+
+      landmarkerRef.current = await getPoseLandmarker();
+
+      const { Counter } = EXERCISE_COUNTERS[exercise];
+      counterRef.current = new Counter();
+      lastDataRef.current = { count: 0, angle: 0, state: "", feedback: "" };
+      errorStreakRef.current = 0;
+      setLiveStats({ count: 0, feedback: "Get ready…" });
+      startTimeRef.current = performance.now();
+
+      setPhase("live");
+      rafRef.current = requestAnimationFrame(detectionLoop);
     } catch (error) {
       console.error("Webcam Session Error:", error);
-      alert("Unable to start session.");
-    } finally {
-      setLoading(false);
+      stopCamera();
+      setCameraError(describeCameraError(error));
+      setPhase("error");
     }
+  };
+
+  const endSession = () => {
+    const durationSeconds = (performance.now() - startTimeRef.current) / 1000;
+    stopCamera();
+
+    const data = lastDataRef.current;
+    const { exerciseName } = EXERCISE_COUNTERS[exercise];
+    const formScore = calculateFormScore(exercise, data);
+    const durationStr = formatDuration(durationSeconds);
+    const caloriesBurned = estimateCalories(
+      exerciseName,
+      durationSeconds,
+      bodyWeightRef.current,
+    );
+
+    const today = new Date().toISOString().split("T")[0];
+    setPendingWorkout({
+      exercise_name: exerciseName,
+      sets: 1,
+      reps: data.count,
+      duration: durationStr,
+      calories_burned: caloriesBurned,
+      form_score: formScore,
+      notes: "AI Webcam Session",
+      workout_date: today,
+    });
+    setPhase("launcher");
   };
 
   const handleSave = async () => {
     try {
       await saveWorkout(pendingWorkout);
-      alert("Workout saved successfully.");
+      toast.success("Workout saved successfully.");
       setPendingWorkout(null);
     } catch (error) {
       console.error("Workout Save Error:", error);
-      alert("Unable to save workout.");
+      toast.error("Unable to save workout.");
     }
   };
 
   const handleDiscard = () => setPendingWorkout(null);
 
+  const retryFromError = () => {
+    setCameraError("");
+    setPhase("launcher");
+  };
+
   /* ── derived ── */
   const activeExercise = EXERCISES.find((e) => e.value === exercise);
+  const isLive = phase === "live";
+  const isRequesting = phase === "requesting";
 
   return (
     <DashboardLayout>
@@ -209,8 +454,9 @@ export default function Webcam() {
                 initial="hidden"
                 animate="visible"
               >
-                Your form is analysed live, rep by rep. Choose an exercise and
-                let your AI trainer take over.
+                Your form is analysed live, rep by rep, using your own
+                camera. Choose an exercise and let your AI trainer take
+                over.
               </motion.p>
 
               <motion.div
@@ -227,16 +473,16 @@ export default function Webcam() {
                   <Activity size={11} /> Live Form Scoring
                 </span>
                 <span className="webcam-pill pill-violet">
-                  <Flame size={11} /> Calorie Tracking
+                  <ShieldCheck size={11} /> Runs In Your Browser
                 </span>
               </motion.div>
             </div>
           </div>
         </motion.section>
 
-        {/* ── MAIN CARD: exercise selector + launch ── */}
         <AnimatePresence mode="wait">
-          {!pendingWorkout && (
+          {/* ── LAUNCHER ── */}
+          {phase === "launcher" && !pendingWorkout && (
             <motion.div
               key="launcher"
               className="webcam-main-card"
@@ -246,7 +492,6 @@ export default function Webcam() {
               animate="visible"
               exit={{ opacity: 0, y: -12, transition: { duration: 0.22 } }}
             >
-              {/* Exercise selector */}
               <div className="webcam-section-header">
                 <h2 className="webcam-section-title">Select Exercise</h2>
                 <p className="webcam-section-sub">
@@ -264,7 +509,6 @@ export default function Webcam() {
                       type="button"
                       className={`exercise-tile ${active ? "exercise-tile-active" : ""}`}
                       onClick={() => setExercise(ex.value)}
-                      disabled={loading}
                       whileHover={{ y: -2 }}
                       whileTap={{ scale: 0.97 }}
                     >
@@ -279,7 +523,6 @@ export default function Webcam() {
                 })}
               </div>
 
-              {/* Instructions */}
               <div className="webcam-instructions">
                 <div className="instructions-header">
                   <Sparkles size={14} className="instructions-icon" />
@@ -297,42 +540,112 @@ export default function Webcam() {
                   <li>Keep good lighting for accurate pose detection.</li>
                   <li>Perform your reps at a controlled, steady pace.</li>
                   <li>
-                    Press <kbd>Q</kbd> when you're done to end the session.
+                    Click <strong>Stop Session</strong> when you're done —
+                    your video is processed on your device and is never
+                    uploaded or recorded.
                   </li>
                 </ul>
               </div>
 
-              {/* Launch button */}
+              {!CAMERA_SUPPORTED && (
+                <p className="webcam-tip webcam-tip-warning">
+                  <AlertTriangle size={13} />
+                  This browser doesn't support camera access — try Chrome,
+                  Edge, Firefox, or Safari.
+                </p>
+              )}
+
               <motion.button
                 type="button"
-                className={`launch-btn ${loading ? "launch-btn-loading" : ""}`}
+                className="launch-btn"
                 onClick={startSession}
-                disabled={loading}
+                disabled={!CAMERA_SUPPORTED}
                 whileHover={
-                  !loading
+                  CAMERA_SUPPORTED
                     ? { y: -2, boxShadow: "0 12px 32px rgba(99,102,241,0.30)" }
                     : {}
                 }
-                whileTap={!loading ? { scale: 0.98 } : {}}
+                whileTap={CAMERA_SUPPORTED ? { scale: 0.98 } : {}}
               >
-                {loading ? (
-                  <>
-                    <div className="launch-spinner" />
-                    Opening Camera…
-                  </>
-                ) : (
-                  <>
-                    <Play size={16} fill="currentColor" />
-                    Start Session — {activeExercise?.label}
-                  </>
-                )}
+                <Play size={16} fill="currentColor" />
+                Start Session — {activeExercise?.label}
               </motion.button>
+            </motion.div>
+          )}
 
-              <p className="webcam-tip">
-                <Keyboard size={13} />
-                Press <strong>Q</strong> inside the camera window to end your
-                session
-              </p>
+          {/* ── REQUESTING CAMERA / LIVE SESSION ── */}
+          {(isRequesting || isLive) && (
+            <motion.div
+              key="live"
+              className="webcam-main-card webcam-live-card"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <div className="live-video-wrap">
+                <video
+                  ref={videoRef}
+                  className="live-video"
+                  muted
+                  playsInline
+                  autoPlay
+                />
+                <canvas ref={canvasRef} className="live-canvas" />
+
+                {isRequesting && (
+                  <div className="live-overlay-loading">
+                    <div className="launch-spinner" />
+                    <span>Requesting camera access…</span>
+                  </div>
+                )}
+
+                {isLive && (
+                  <div className="live-hud">
+                    <span className="live-hud-count">{liveStats.count}</span>
+                    <span className="live-hud-label">
+                      {activeExercise?.label} reps
+                    </span>
+                    {liveStats.feedback && (
+                      <span className="live-hud-feedback">
+                        {liveStats.feedback}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {isLive && (
+                <motion.button
+                  type="button"
+                  className="stop-btn"
+                  onClick={endSession}
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Square size={15} fill="currentColor" />
+                  Stop Session
+                </motion.button>
+              )}
+            </motion.div>
+          )}
+
+          {/* ── CAMERA ERROR ── */}
+          {phase === "error" && (
+            <motion.div
+              key="error"
+              className="webcam-main-card webcam-error-card"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <div className="webcam-error-icon">
+                <VideoOff size={26} />
+              </div>
+              <h2 className="webcam-section-title">Camera Unavailable</h2>
+              <p className="webcam-error-message">{cameraError}</p>
+              <button type="button" className="launch-btn" onClick={retryFromError}>
+                Try Again
+              </button>
             </motion.div>
           )}
 

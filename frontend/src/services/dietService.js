@@ -1,7 +1,7 @@
 // src/services/dietService.js
 /*
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: dietService.js
 
@@ -61,7 +61,9 @@ export const generateMealPlan = async (data) => {
 
 export const generateGroceryList = async (
 
-  mealPlan
+  mealPlan,
+
+  planId = null
 
 ) => {
 
@@ -73,7 +75,9 @@ export const generateGroceryList = async (
 
       {
 
-        meal_plan: mealPlan
+        meal_plan: mealPlan,
+
+        plan_id: planId,
 
       }
 
@@ -97,4 +101,37 @@ export const generateGroceryList = async (
 
   }
 
+};
+
+// Recent Plans — reuses persisted MealPlan rows the backend already
+// creates on every generation. Loading a plan never calls Gemini again.
+export const getMealPlanHistory = async ({ limit = 10, offset = 0 } = {}) => {
+  try {
+    const response = await api.get("/diet/history", {
+      params: { limit, offset },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Diet Service Error:", error);
+    throw error;
+  }
+};
+
+export const getMealPlanById = async (planId) => {
+  try {
+    const response = await api.get(`/diet/history/${planId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Diet Service Error:", error);
+    throw error;
+  }
+};
+
+export const deleteMealPlan = async (planId) => {
+  try {
+    await api.delete(`/diet/history/${planId}`);
+  } catch (error) {
+    console.error("Diet Service Error:", error);
+    throw error;
+  }
 };

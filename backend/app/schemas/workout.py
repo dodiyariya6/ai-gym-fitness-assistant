@@ -1,7 +1,7 @@
 # app/schemas/workout.py
 """
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: workout.py
 
@@ -31,6 +31,7 @@ AI Wellness Score
 ==================================================
 """
 
+from datetime import date
 from typing import Optional
 from pydantic import BaseModel
 
@@ -47,7 +48,7 @@ class WorkoutCreate(BaseModel):
 
     notes: Optional[str] = ""
 
-    workout_date: str
+    workout_date: date
 
     form_score: Optional[int] = None
 
@@ -72,7 +73,7 @@ class WorkoutResponse(BaseModel):
 
     notes: Optional[str] = ""
 
-    workout_date: str
+    workout_date: date
 
     class Config:
 

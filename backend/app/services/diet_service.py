@@ -1,7 +1,7 @@
 # app/services/diet_service.py
 """
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: diet_service.py
 

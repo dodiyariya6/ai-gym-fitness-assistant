@@ -1,7 +1,7 @@
 # app/services/profile_service.py
 """
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: profile_service.py
 

@@ -1,7 +1,7 @@
 # app/services/consistency_service.py
 """
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: consistency_service.py
 

@@ -1,42 +1,18 @@
 # app/services/analytics_service.py
 """
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: analytics_service.py
 
 Purpose:
 Generates dashboard analytics, trends, wellness
 scores and personalized fitness insights.
-
-Functionality:
-- Calculates workout statistics.
-- Calculates habit statistics.
-- Generates trend indicators.
-- Builds chart data.
-- Generates recent activity.
-- Calculates wellness scores.
-- Generates AI suggestions.
-- Returns analytics data for the dashboard.
-
-Responsibilities:
-Dashboard analytics
-Trend analysis
-Wellness scoring
-Recent activity generation
-Personalized suggestions
-
-Used By:
-analytics.py router
-Dashboard
-Reports system
-AI Wellness Score
-
 ==================================================
 """
 
 from datetime import date, timedelta
-from sqlalchemy import func, desc, cast, Date
+from sqlalchemy import func, desc
 
 from app.models.workout import Workout
 from app.models.habit import Habit
@@ -53,332 +29,217 @@ def _trend_direction(latest, previous):
     return "neutral"
 
 
-def get_user_analytics(db, user_id):
-
-    profile = get_profile(db, user_id)
-
+def _get_workout_metrics(db, user_id: int):
+    """Aggregate total workouts, total reps, and average form score in batched queries."""
     total_workouts = db.query(Workout).filter(Workout.user_id == user_id).count()
 
-    total_reps = (
-        db.query(func.sum(Workout.reps)).filter(Workout.user_id == user_id).scalar()
-    ) or 0
-
-    avg_form_score = (
-        db.query(func.avg(Workout.form_score))
-        .filter(
-            Workout.user_id == user_id,
-            Workout.form_score.isnot(None),
-        )
-        .scalar()
-    )
-
-    avg_form = round(float(avg_form_score), 2) if avg_form_score is not None else 0
-
-    total_steps = (
-        db.query(func.sum(Habit.steps)).filter(Habit.user_id == user_id).scalar()
-    ) or 0
-
-    avg_sleep = (
-        db.query(func.avg(Habit.sleep_hours)).filter(Habit.user_id == user_id).scalar()
-    ) or 0
-
-    avg_water = (
-        db.query(func.avg(Habit.water_intake)).filter(Habit.user_id == user_id).scalar()
-    ) or 0
-
-    habit_logs = db.query(Habit).filter(Habit.user_id == user_id).count()
-
-    avg_sleep_f = round(float(avg_sleep), 2)
-    avg_water_f = round(float(avg_water), 2)
-
-    today = date.today()
-    week_start = today - timedelta(days=6)  # rolling 7-day window
-
-    # POSTGRES CAST FIX:
-    # Workout.workout_date and Habit.date are stored as character varying
-    # (VARCHAR) in the PostgreSQL database.  Comparing a VARCHAR column
-    # against a Python date object without an explicit cast causes PostgreSQL
-    # to raise:
-    #   "operator does not exist: character varying >= date"
-    # because PostgreSQL has no implicit coercion between the two types.
-    #
-    # Fix: wrap every date-range filter on these two columns with
-    # cast(<column>, Date), which tells PostgreSQL to interpret the stored
-    # string as a DATE value before performing the comparison.  The Python
-    # date objects on the right-hand side are then correctly compared as dates.
-    #
-    # str() conversion is also applied to week_start / today on the RHS so the
-    # bound parameter is always sent as an ISO-8601 string — the format that
-    # PostgreSQL's DATE cast expects — regardless of SQLAlchemy dialect.
-
-    days_logged_this_week = (
-        db.query(func.count(func.distinct(Habit.date)))
-        .filter(
-            Habit.user_id == user_id,
-            cast(Habit.date, Date) >= week_start,
-            cast(Habit.date, Date) <= today,
-        )
-        .scalar()
-    ) or 0
-
-    workout_completion_rate = round((days_logged_this_week / 7) * 100, 2)
-
-    last_two_workouts = (
-        db.query(Workout)
-        .filter(Workout.user_id == user_id)
-        .order_by(desc(Workout.id))
-        .limit(2)
-        .all()
-    )
-
-    reps_trend = None
-    form_trend = None
-    workouts_trend = None
-
-    if len(last_two_workouts) >= 2:
-        reps_trend = _trend_direction(
-            last_two_workouts[0].reps,
-            last_two_workouts[1].reps,
-        )
-        if (
-            last_two_workouts[0].form_score is not None
-            and last_two_workouts[1].form_score is not None
-        ):
-            form_trend = _trend_direction(
-                last_two_workouts[0].form_score,
-                last_two_workouts[1].form_score,
-            )
-
-    if total_workouts >= 2:
-        workouts_trend = "up"
-    elif total_workouts == 1:
-        workouts_trend = "neutral"
-
-    last_two_habits = (
-        db.query(Habit)
-        .filter(Habit.user_id == user_id)
-        .order_by(desc(Habit.date))
-        .limit(2)
-        .all()
-    )
-
-    steps_trend = None
-    sleep_trend = None
-    water_trend = None
-
-    if len(last_two_habits) >= 2:
-        steps_trend = _trend_direction(
-            last_two_habits[0].steps,
-            last_two_habits[1].steps,
-        )
-        sleep_trend = _trend_direction(
-            last_two_habits[0].sleep_hours,
-            last_two_habits[1].sleep_hours,
-        )
-        water_trend = _trend_direction(
-            last_two_habits[0].water_intake,
-            last_two_habits[1].water_intake,
-        )
-
-    completion_trend = None
-    if days_logged_this_week > 0:
-        if workout_completion_rate >= 80:
-            completion_trend = "up"
-        elif workout_completion_rate < 50:
-            completion_trend = "down"
-        else:
-            completion_trend = "neutral"
-
-    daily_comparison = {
-        "total_workouts": workouts_trend,
-        "total_reps": reps_trend,
-        "avg_form_score": form_trend,
-        "total_steps": steps_trend,
-        "avg_sleep": sleep_trend,
-        "avg_water": water_trend,
-        "workout_completion_rate": completion_trend,
-    }
-
-    # ISSUE 2 FIX: filter by the latest 7-day window instead of using .limit(7)
-    # which previously returned the first 7 workout dates ever recorded.
-    # Now always shows the freshest 7 days relative to today.
-    # cast(Workout.workout_date, Date) applied — see POSTGRES CAST FIX above.
-    chart_rows = (
+    stats = (
         db.query(
-            Workout.workout_date,
-            func.count(Workout.id).label("workouts"),
+            func.coalesce(func.sum(Workout.reps), 0).label("total_reps"),
+            func.avg(Workout.form_score).label("avg_form"),
         )
-        .filter(
-            Workout.user_id == user_id,
-            cast(Workout.workout_date, Date) >= week_start,
-            cast(Workout.workout_date, Date) <= today,
-        )
-        .group_by(Workout.workout_date)
-        .order_by(Workout.workout_date)
-        .all()
+        .filter(Workout.user_id == user_id)
+        .first()
     )
 
-    workout_trend = [
-        {"day": str(row.workout_date), "workouts": row.workouts} for row in chart_rows
-    ]
+    total_reps = int(stats.total_reps) if stats else 0
+    avg_form = round(float(stats.avg_form), 2) if (stats and stats.avg_form is not None) else 0
 
-    # DATA SYNC FIX: 7-day rolling averages for Dashboard KPI cards and hero pills.
-    # cast(Habit.date, Date) applied — see POSTGRES CAST FIX above.
-    # Divides by the count of days actually logged in the window, not by 7,
-    # so unlogged days do not deflate the averages.
+    return total_workouts, total_reps, avg_form
+
+
+def _get_habit_metrics(db, user_id: int):
+    """Aggregate lifetime habit metrics in a single query."""
+    stats = (
+        db.query(
+            func.count(Habit.id).label("habit_logs"),
+            func.coalesce(func.sum(Habit.steps), 0).label("total_steps"),
+            func.coalesce(func.avg(Habit.sleep_hours), 0.0).label("avg_sleep"),
+            func.coalesce(func.avg(Habit.water_intake), 0.0).label("avg_water"),
+        )
+        .filter(Habit.user_id == user_id)
+        .first()
+    )
+
+    habit_logs = stats.habit_logs if stats else 0
+    total_steps = int(stats.total_steps) if stats else 0
+    avg_sleep_f = round(float(stats.avg_sleep), 2) if stats else 0.0
+    avg_water_f = round(float(stats.avg_water), 2) if stats else 0.0
+
+    return habit_logs, total_steps, avg_sleep_f, avg_water_f
+
+
+def _get_rolling_7d_habits(db, user_id: int, week_start: date, today: date):
+    """Fetch 7-day rolling habit metrics."""
     recent_habits_7d = (
         db.query(Habit)
         .filter(
             Habit.user_id == user_id,
-            cast(Habit.date, Date) >= week_start,
-            cast(Habit.date, Date) <= today,
+            Habit.date >= week_start,
+            Habit.date <= today,
         )
         .all()
     )
 
     habit_count_7d = len(recent_habits_7d)
 
-    # Avg Daily Steps — last 7 calendar days, divided by days actually logged.
-    # Returns 0 only when there are genuinely no habit records at all.
     avg_daily_steps_7d = (
         round(sum(h.steps for h in recent_habits_7d) / habit_count_7d)
         if habit_count_7d > 0
         else 0
     )
-
-    # Avg Daily Water — last 7 calendar days, divided by days actually logged.
-    # Returns 0 only when there are genuinely no habit records at all.
     avg_daily_water_7d = (
-        round(
-            sum(float(h.water_intake) for h in recent_habits_7d) / habit_count_7d,
-            1,
-        )
+        round(sum(float(h.water_intake) for h in recent_habits_7d) / habit_count_7d, 1)
         if habit_count_7d > 0
-        else 0
+        else 0.0
     )
-
-    # Avg Daily Sleep — last 7 calendar days, divided by days actually logged.
-    # Returns 0 only when there are genuinely no habit records at all.
     avg_daily_sleep_7d = (
-        round(
-            sum(float(h.sleep_hours) for h in recent_habits_7d) / habit_count_7d,
-            2,
-        )
+        round(sum(float(h.sleep_hours) for h in recent_habits_7d) / habit_count_7d, 2)
         if habit_count_7d > 0
-        else 0
+        else 0.0
     )
 
-    # Reports KPI: overall average steps across ALL habit logs — not capped to
-    # 7 days.  Divides total lifetime steps by total number of habit records,
-    # giving a stable long-term activity benchmark for the Reports page.
-    overall_avg_daily_steps = round(total_steps / habit_logs) if habit_logs > 0 else 0
+    days_logged_this_week = len({h.date for h in recent_habits_7d})
+    workout_completion_rate = round((days_logged_this_week / 7) * 100, 2)
 
-    recent_workouts = (
-        db.query(Workout)
-        .filter(Workout.user_id == user_id)
-        .order_by(desc(Workout.id))
-        .limit(3)
-        .all()
+    return (
+        avg_daily_steps_7d,
+        avg_daily_water_7d,
+        avg_daily_sleep_7d,
+        days_logged_this_week,
+        workout_completion_rate,
     )
 
-    recent_habits = (
-        db.query(Habit)
+
+def _compute_current_streak(db, user_id: int) -> int:
+    """Compute active habit logging streak using recent dates."""
+    dates_rows = (
+        db.query(Habit.date)
         .filter(Habit.user_id == user_id)
         .order_by(desc(Habit.date))
-        .limit(3)
+        .limit(60)
         .all()
     )
-
-    recent_activity = []
-
-    for w in recent_workouts:
-        form_part = f", form {w.form_score}%" if w.form_score is not None else ""
-        recent_activity.append(
-            {
-                "title": (
-                    f"Workout logged — {w.exercise_name}, "
-                    f"{w.reps} reps"
-                    f"{form_part}"
-                ),
-                "time": str(w.workout_date),
-                "type": "workout",
-            }
-        )
-
-    for h in recent_habits:
-        recent_activity.append(
-            {
-                "title": (
-                    f"Habit logged — {h.steps:,} steps, " f"{h.sleep_hours} hrs sleep"
-                ),
-                "time": str(h.date),
-                "type": "habit",
-            }
-        )
-
-    recent_activity.sort(key=lambda x: x["time"], reverse=True)
-    recent_activity = recent_activity[:5]
-
-    logged_dates = sorted(
-        {h.date for h in db.query(Habit).filter(Habit.user_id == user_id).all()}
-    )
+    logged_dates = {r[0] for r in dates_rows}
 
     current_streak = 0
-
     if logged_dates:
-        # logged_dates contains strings (VARCHAR) — compare against str(today)
-        # so the while-loop does not fail on type mismatch.
-        check_date = str(date.today())
+        check_date = date.today()
         while check_date in logged_dates:
             current_streak += 1
-            # Step back one calendar day as a string for consistent comparison.
-            check_date = str(date.fromisoformat(check_date) - timedelta(days=1))
+            check_date -= timedelta(days=1)
 
-    has_any_data = total_workouts > 0 or habit_logs > 0
+    return current_streak
 
+
+def _compute_wellness_breakdown(
+    has_any_data: bool,
+    avg_sleep_f: float,
+    avg_water_f: float,
+    avg_daily_steps: float,
+    workout_completion_rate: float,
+    avg_form: float,
+    current_streak: int,
+) -> dict:
+    """
+    Per-component point breakdown feeding the 0-100 wellness score.
+    Exposing the intermediate values (P2.11 "wellness score explanation")
+    lets Reports/Dashboard/AI insights explain *why* the score is what it
+    is, without changing what it computes to — the formulas, order and
+    thresholds below are copied verbatim from the original single-function
+    implementation, and _compute_wellness_score() sums this dict in the
+    same insertion order, so the total is unchanged.
+    """
     if not has_any_data:
-        health_score = 0
+        return {
+            "sleep": 0.0,
+            "water": 0.0,
+            "steps": 0.0,
+            "workout_completion": 0.0,
+            "form": 0.0,
+            "streak": 0.0,
+        }
 
+    breakdown = {}
+
+    # Sleep (25 pts)
+    if avg_sleep_f >= 7:
+        breakdown["sleep"] = 25.0
     else:
-        wellness_score = 0
+        breakdown["sleep"] = max(0.0, 25.0 - (7.0 - avg_sleep_f) * 3.0)
 
-        # Sleep (25)
-        if avg_sleep_f >= 7:
-            wellness_score += 25
-        else:
-            wellness_score += max(0, 25 - (7 - avg_sleep_f) * 3)
+    # Water (20 pts)
+    breakdown["water"] = min(20.0, (avg_water_f / 2.0) * 20.0)
 
-        # Water (20)
-        wellness_score += min(20, (avg_water_f / 2) * 20)
+    # Steps (15 pts)
+    if avg_daily_steps >= 6000:
+        breakdown["steps"] = 15.0
+    else:
+        breakdown["steps"] = (avg_daily_steps / 6000.0) * 15.0
 
-        # Average daily steps (15)
-        avg_daily_steps = (total_steps / habit_logs) if habit_logs else 0
-        if avg_daily_steps >= 6000:
-            wellness_score += 15
-        else:
-            wellness_score += (avg_daily_steps / 6000) * 15
+    # Workout completion (10 pts)
+    breakdown["workout_completion"] = 10.0 if workout_completion_rate >= 70 else 0.0
 
-        # Workout completion (10)
-        if workout_completion_rate >= 70:
-            wellness_score += 10
+    # Form score (20 pts)
+    breakdown["form"] = (avg_form / 100.0) * 20.0 if avg_form else 0.0
 
-        # Form score (20)
-        if avg_form:
-            wellness_score += (avg_form / 100) * 20
+    # Streak (10 pts)
+    if current_streak >= 7:
+        breakdown["streak"] = 10.0
+    elif current_streak >= 4:
+        breakdown["streak"] = 7.0
+    elif current_streak >= 1:
+        breakdown["streak"] = 4.0
+    else:
+        breakdown["streak"] = 0.0
 
-        # Streak (10)
-        if current_streak >= 7:
-            wellness_score += 10
-        elif current_streak >= 4:
-            wellness_score += 7
-        elif current_streak >= 1:
-            wellness_score += 4
+    return breakdown
 
-        health_score = round(min(100, wellness_score))
 
-    water_target = profile.water_goal if profile and profile.water_goal else 2.0
-    sleep_target = profile.sleep_goal if profile and profile.sleep_goal else 7.0
-    step_target = profile.step_goal if profile and profile.step_goal else 10_000
+def _compute_wellness_score(breakdown: dict) -> int:
+    """Sums the breakdown produced by _compute_wellness_breakdown() — same
+    formula, same order as the original implementation, so the total is
+    byte-for-byte unchanged from before this refactor."""
+    return round(min(100.0, sum(breakdown.values())))
+
+
+_WELLNESS_LABELS = {
+    "sleep": ("Sleep", 25),
+    "water": ("Hydration", 20),
+    "form": ("Workout Form", 20),
+    "steps": ("Steps", 15),
+    "workout_completion": ("Weekly Logging Consistency", 10),
+    "streak": ("Streak Bonus", 10),
+}
+
+
+def _format_wellness_breakdown(breakdown: dict) -> list[dict]:
+    """Display-only rounding for the API response — never fed back into the
+    score calculation, so it cannot introduce rounding drift in the total."""
+    return [
+        {
+            "component": key,
+            "label": label,
+            "points": round(breakdown.get(key, 0.0), 1),
+            "max_points": max_points,
+        }
+        for key, (label, max_points) in _WELLNESS_LABELS.items()
+    ]
+
+
+def _generate_ai_suggestions(
+    profile,
+    avg_water_f: float,
+    avg_sleep_f: float,
+    total_steps: int,
+    avg_form: float,
+    workout_completion_rate: float,
+    days_logged_this_week: int,
+) -> list[str]:
+    """Generate personalized improvement suggestions."""
+    water_target = profile.water_goal if (profile and profile.water_goal) else 2.0
+    sleep_target = profile.sleep_goal if (profile and profile.sleep_goal) else 7.0
+    step_target = profile.step_goal if (profile and profile.step_goal) else 10_000
     has_personalized_targets = bool(
         profile and profile.water_goal and profile.sleep_goal and profile.step_goal
     )
@@ -440,6 +301,155 @@ def get_user_analytics(db, user_id):
             "All metrics are on track. Keep maintaining your current routine."
         )
 
+    return suggestions
+
+
+def get_user_analytics(db, user_id: int) -> dict:
+    """Central dashboard analytics generator."""
+    today = date.today()
+    week_start = today - timedelta(days=6)
+
+    profile = get_profile(db, user_id)
+    total_workouts, total_reps, avg_form = _get_workout_metrics(db, user_id)
+    habit_logs, total_steps, avg_sleep_f, avg_water_f = _get_habit_metrics(db, user_id)
+
+    (
+        avg_daily_steps_7d,
+        avg_daily_water_7d,
+        avg_daily_sleep_7d,
+        days_logged_this_week,
+        workout_completion_rate,
+    ) = _get_rolling_7d_habits(db, user_id, week_start, today)
+
+    # Compare trends
+    last_two_workouts = (
+        db.query(Workout)
+        .filter(Workout.user_id == user_id)
+        .order_by(desc(Workout.id))
+        .limit(2)
+        .all()
+    )
+    reps_trend = (
+        _trend_direction(last_two_workouts[0].reps, last_two_workouts[1].reps)
+        if len(last_two_workouts) >= 2
+        else None
+    )
+    form_trend = (
+        _trend_direction(last_two_workouts[0].form_score, last_two_workouts[1].form_score)
+        if (len(last_two_workouts) >= 2 and last_two_workouts[0].form_score is not None and last_two_workouts[1].form_score is not None)
+        else None
+    )
+    workouts_trend = "up" if total_workouts >= 2 else ("neutral" if total_workouts == 1 else None)
+
+    last_two_habits = (
+        db.query(Habit)
+        .filter(Habit.user_id == user_id)
+        .order_by(desc(Habit.date))
+        .limit(2)
+        .all()
+    )
+    steps_trend = _trend_direction(last_two_habits[0].steps, last_two_habits[1].steps) if len(last_two_habits) >= 2 else None
+    sleep_trend = _trend_direction(last_two_habits[0].sleep_hours, last_two_habits[1].sleep_hours) if len(last_two_habits) >= 2 else None
+    water_trend = _trend_direction(last_two_habits[0].water_intake, last_two_habits[1].water_intake) if len(last_two_habits) >= 2 else None
+
+    completion_trend = None
+    if days_logged_this_week > 0:
+        if workout_completion_rate >= 80:
+            completion_trend = "up"
+        elif workout_completion_rate < 50:
+            completion_trend = "down"
+        else:
+            completion_trend = "neutral"
+
+    daily_comparison = {
+        "total_workouts": workouts_trend,
+        "total_reps": reps_trend,
+        "avg_form_score": form_trend,
+        "total_steps": steps_trend,
+        "avg_sleep": sleep_trend,
+        "avg_water": water_trend,
+        "workout_completion_rate": completion_trend,
+    }
+
+    # Chart rows
+    chart_rows = (
+        db.query(
+            Workout.workout_date,
+            func.count(Workout.id).label("workouts"),
+        )
+        .filter(
+            Workout.user_id == user_id,
+            Workout.workout_date >= week_start,
+            Workout.workout_date <= today,
+        )
+        .group_by(Workout.workout_date)
+        .order_by(Workout.workout_date)
+        .all()
+    )
+    workout_trend = [
+        {"day": str(row.workout_date), "workouts": row.workouts} for row in chart_rows
+    ]
+
+    # Recent activity
+    recent_workouts = (
+        db.query(Workout)
+        .filter(Workout.user_id == user_id)
+        .order_by(desc(Workout.id))
+        .limit(3)
+        .all()
+    )
+    recent_habits = (
+        db.query(Habit)
+        .filter(Habit.user_id == user_id)
+        .order_by(desc(Habit.date))
+        .limit(3)
+        .all()
+    )
+
+    recent_activity = []
+    for w in recent_workouts:
+        form_part = f", form {w.form_score}%" if w.form_score is not None else ""
+        recent_activity.append({
+            "title": f"Workout logged — {w.exercise_name}, {w.reps} reps{form_part}",
+            "time": str(w.workout_date),
+            "type": "workout",
+        })
+    for h in recent_habits:
+        recent_activity.append({
+            "title": f"Habit logged — {h.steps:,} steps, {h.sleep_hours} hrs sleep",
+            "time": str(h.date),
+            "type": "habit",
+        })
+
+    recent_activity.sort(key=lambda x: x["time"], reverse=True)
+    recent_activity = recent_activity[:5]
+
+    current_streak = _compute_current_streak(db, user_id)
+    overall_avg_daily_steps = round(total_steps / habit_logs) if habit_logs > 0 else 0
+    avg_daily_steps_lifetime = (total_steps / habit_logs) if habit_logs > 0 else 0.0
+
+    wellness_breakdown_raw = _compute_wellness_breakdown(
+        has_any_data=(total_workouts > 0 or habit_logs > 0),
+        avg_sleep_f=avg_sleep_f,
+        avg_water_f=avg_water_f,
+        avg_daily_steps=avg_daily_steps_lifetime,
+        workout_completion_rate=workout_completion_rate,
+        avg_form=avg_form,
+        current_streak=current_streak,
+    )
+    health_score = _compute_wellness_score(wellness_breakdown_raw)
+    wellness_breakdown = _format_wellness_breakdown(wellness_breakdown_raw)
+
+    suggestions = _generate_ai_suggestions(
+        profile=profile,
+        avg_water_f=avg_water_f,
+        avg_sleep_f=avg_sleep_f,
+        total_steps=total_steps,
+        avg_form=avg_form,
+        workout_completion_rate=workout_completion_rate,
+        days_logged_this_week=days_logged_this_week,
+    )
+
     return {
         "total_workouts": total_workouts,
         "total_reps": total_reps,
@@ -447,25 +457,22 @@ def get_user_analytics(db, user_id):
         "total_steps": total_steps,
         "avg_sleep": avg_sleep_f,
         "avg_water": avg_water_f,
-        # weekly goal: days logged this week ÷ 7, capped at 100%
         "workout_completion_rate": workout_completion_rate,
         "health_score": health_score,
+        "wellness_breakdown": wellness_breakdown,
         "daily_comparison": daily_comparison,
         "workout_trend": workout_trend,
         "recent_activity": recent_activity,
         "ai_suggestions": suggestions,
         "current_streak": current_streak,
-        # Dashboard KPI cards and hero pills: 7-day rolling averages.
-        # Denominator = days actually logged in the window, not 7.
         "avg_daily_steps_7d": avg_daily_steps_7d,
         "avg_daily_water_7d": avg_daily_water_7d,
         "avg_daily_sleep_7d": avg_daily_sleep_7d,
-        # Reports KPI: overall average across ALL habit logs (long-term view).
         "overall_avg_daily_steps": overall_avg_daily_steps,
     }
 
 
-def get_habit_trends(db, user_id):
+def get_habit_trends(db, user_id: int):
     habits = db.query(Habit).filter(Habit.user_id == user_id).order_by(Habit.date).all()
     return [
         {

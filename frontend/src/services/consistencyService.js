@@ -1,7 +1,7 @@
 // src/services/consistencyService.js
 /*
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: consistencyService.js
 

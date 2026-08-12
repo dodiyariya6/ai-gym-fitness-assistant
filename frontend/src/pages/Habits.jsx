@@ -1,7 +1,7 @@
 // src/pages/Habits.jsx
 /*
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: Habits.jsx
 
@@ -46,6 +46,7 @@ import {
   History as HistoryIcon,
   Sparkles,
   AlertCircle,
+  Trash2,
 } from "lucide-react";
 
 import DashboardLayout from "../layouts/DashboardLayout";
@@ -54,7 +55,13 @@ import {
   logHabit,
   updateHabit,
   getHabitHistory,
+  deleteHabit,
 } from "../services/habitService";
+import { getStoredTargets } from "../services/profileService";
+import { getInsights } from "../services/analyticsService";
+import { useToast } from "../context/ToastContext";
+import ConfirmDialog from "../components/common/ConfirmDialog";
+import InsightList from "../components/common/InsightList";
 
 import "../styles/habits.css";
 
@@ -172,7 +179,12 @@ function sanitizePayload(habit) {
    or to what gets sent to the backend)
 ================================================ */
 
-const HABIT_GOALS = {
+// Fallback goals — used only until the user's personalized targets load, or
+// if they've never generated targets on the Profile page. These numbers
+// mirror the backend's own fallback constants in consistency_service.py
+// (_FALLBACK_WATER_GOAL / _FALLBACK_SLEEP_GOAL / _FALLBACK_STEP_GOAL) so this
+// page and the Consistency Tracker agree when no personalized targets exist.
+const DEFAULT_HABIT_GOALS = {
   water_intake: 2,
   sleep_hours: 7,
   steps: 6000,
@@ -208,44 +220,52 @@ function computeStreak(historyMap, predicate) {
   return streak;
 }
 
-const HABIT_ROWS = [
-  {
-    key: "water_intake",
-    label: "Water Intake",
-    icon: Droplets,
-    accent: "var(--accent-cyan, #06b6d4)",
-    soft: "var(--accent-cyan-soft, rgba(6, 182, 212, 0.12))",
-    format: (r) => `${r.water_intake} L`,
-    isComplete: (r) => Number(r?.water_intake) >= HABIT_GOALS.water_intake,
-  },
-  {
-    key: "sleep_hours",
-    label: "Sleep",
-    icon: Moon,
-    accent: "var(--secondary-500, #8b5cf6)",
-    soft: "var(--secondary-soft, rgba(139, 92, 246, 0.12))",
-    format: (r) => `${r.sleep_hours} h`,
-    isComplete: (r) => Number(r?.sleep_hours) >= HABIT_GOALS.sleep_hours,
-  },
-  {
-    key: "steps",
-    label: "Steps",
-    icon: Activity,
-    accent: "var(--accent-700, #6366f1)",
-    soft: "var(--accent-50, #eef2ff)",
-    format: (r) => `${r.steps}`,
-    isComplete: (r) => Number(r?.steps) >= HABIT_GOALS.steps,
-  },
-  {
-    key: "workout_done",
-    label: "Workout",
-    icon: Dumbbell,
-    accent: "var(--success-500, #10b981)",
-    soft: "var(--success-soft, rgba(16, 185, 129, 0.12))",
-    format: (r) => (r.workout_done ? "Completed" : "Skipped"),
-    isComplete: (r) => !!r?.workout_done,
-  },
-];
+// Row definitions are now a function of the user's actual goals (personalized
+// targets from Profile, falling back to DEFAULT_HABIT_GOALS) instead of a
+// fixed module-level constant, so the "complete" state shown in the matrix
+// and summary cards always matches the same targets stored on the Profile
+// page — one source of truth, no disagreement between what's displayed and
+// what's compared.
+function buildHabitRows(goals) {
+  return [
+    {
+      key: "water_intake",
+      label: "Water Intake",
+      icon: Droplets,
+      accent: "var(--accent-cyan, #06b6d4)",
+      soft: "var(--accent-cyan-soft, rgba(6, 182, 212, 0.12))",
+      format: (r) => `${r.water_intake} L`,
+      isComplete: (r) => Number(r?.water_intake) >= goals.water_intake,
+    },
+    {
+      key: "sleep_hours",
+      label: "Sleep",
+      icon: Moon,
+      accent: "var(--secondary-500, #8b5cf6)",
+      soft: "var(--secondary-soft, rgba(139, 92, 246, 0.12))",
+      format: (r) => `${r.sleep_hours} h`,
+      isComplete: (r) => Number(r?.sleep_hours) >= goals.sleep_hours,
+    },
+    {
+      key: "steps",
+      label: "Steps",
+      icon: Activity,
+      accent: "var(--accent-700, #6366f1)",
+      soft: "var(--accent-50, #eef2ff)",
+      format: (r) => `${r.steps}`,
+      isComplete: (r) => Number(r?.steps) >= goals.steps,
+    },
+    {
+      key: "workout_done",
+      label: "Workout",
+      icon: Dumbbell,
+      accent: "var(--success-500, #10b981)",
+      soft: "var(--success-soft, rgba(16, 185, 129, 0.12))",
+      format: (r) => (r.workout_done ? "Completed" : "Skipped"),
+      isComplete: (r) => !!r?.workout_done,
+    },
+  ];
+}
 
 /* ================================================
    Small presentational pieces
@@ -312,7 +332,7 @@ function MatrixRow({ row, days, historyMap, index }) {
   );
 }
 
-function HistoryEntry({ habit, index }) {
+function HistoryEntry({ habit, index, onDelete }) {
   return (
     <motion.div
       className="timeline-item"
@@ -327,7 +347,18 @@ function HistoryEntry({ habit, index }) {
       <span className="timeline-dot" />
 
       <div className="timeline-card">
-        <div className="timeline-date">{habit.date}</div>
+        <div className="timeline-date">
+          {habit.date}
+          <button
+            type="button"
+            className="timeline-delete-btn"
+            onClick={() => onDelete(habit)}
+            title="Delete this entry"
+            aria-label={`Delete habit entry for ${habit.date}`}
+          >
+            <Trash2 size={14} />
+          </button>
+        </div>
 
         <div className="timeline-grid">
           <div className="timeline-stat">
@@ -365,6 +396,7 @@ function HistoryEntry({ habit, index }) {
 
 export default function Habit() {
   const location = useLocation();
+  const { toast } = useToast();
 
   const [formData, setFormData] = useState({
     water_intake: "",
@@ -378,12 +410,28 @@ export default function Habit() {
   const [history, setHistory] = useState([]);
   const [pendingHabit, setPendingHabit] = useState(null);
 
+  // Personalized targets from the Profile page (water_goal/sleep_goal/
+  // step_goal). null until loaded, or if the user has never generated
+  // targets — buildHabitRows() falls back to DEFAULT_HABIT_GOALS in that case.
+  const [targets, setTargets] = useState(null);
+
+  // Habit/consistency insights — reuses the existing cached
+  // GET /analytics/insights (see ai_insight_service.py). No new Gemini
+  // call: this is the same endpoint Dashboard already uses, just filtered
+  // to the categories relevant to habits.
+  const [insights, setInsights] = useState(null);
+
   // ISSUE 4 FIX — holds the existing record for the selected date (if any)
   // while the "already logged" confirmation dialog is open.
   const [duplicateModal, setDuplicateModal] = useState({
     open: false,
     existing: null,
   });
+
+  // Delete-confirmation state — target holds the habit entry pending
+  // deletion (or null when the dialog is closed).
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   const formRef = useRef(null);
   const historyRef = useRef(null);
@@ -427,6 +475,34 @@ export default function Habit() {
     loadHistory();
   }, []); // ← FIX: was [location.pathname] — see comment above
 
+  // Load the user's personalized targets (same values shown on the Profile
+  // page, same values used by /consistency/'s weekly/monthly calculations).
+  // Independent of loadHistory() — a missing/failed fetch just means the
+  // matrix falls back to DEFAULT_HABIT_GOALS, it doesn't block the page.
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await getStoredTargets();
+        setTargets(data);
+      } catch {
+        setTargets(null);
+      }
+    })();
+  }, []);
+
+  // Independent of history/targets loading above — a failed/slow insights
+  // call never blocks the rest of the page.
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await getInsights();
+        setInsights(data?.insights ?? []);
+      } catch {
+        setInsights([]);
+      }
+    })();
+  }, []);
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData({
@@ -440,14 +516,14 @@ export default function Habit() {
     const { water_intake, sleep_hours, steps, date } = formData;
 
     if (!water_intake || !sleep_hours || !steps) {
-      alert("Please fill all fields.");
+      toast.warning("Please fill all fields.");
       return;
     }
 
     // ISSUE 2 FIX — validation layer: reject future dates even if the UI
     // max= constraint is bypassed (e.g. via DevTools or programmatic input).
     if (date > todayLocalString()) {
-      alert("You cannot log habits for a future date.");
+      toast.warning("You cannot log habits for a future date.");
       return;
     }
 
@@ -475,13 +551,13 @@ export default function Habit() {
     } catch (error) {
       if (error?.response?.status === 409) {
         await loadHistory();
-        alert(
+        toast.warning(
           "An entry for this date was just created elsewhere. Please review and try again.",
         );
         return;
       }
       console.error(error);
-      alert("Unable to save habit.");
+      toast.error("Unable to save habit.");
     }
   };
 
@@ -515,13 +591,53 @@ export default function Habit() {
       resetForm();
     } catch (error) {
       console.error(error);
-      alert("Unable to update habit.");
+      toast.error("Unable to update habit.");
     }
   };
 
   const handleEditExistingCancel = () => {
     setDuplicateModal({ open: false, existing: null });
   };
+
+  const handleDeleteRequest = (habit) => {
+    setDeleteTarget(habit);
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteTarget(null);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
+    try {
+      setDeleting(true);
+      await deleteHabit(deleteTarget.id);
+      toast.success("Habit entry deleted.");
+      setDeleteTarget(null);
+      await loadHistory();
+    } catch (error) {
+      if (error?.response?.status === 404) {
+        toast.warning("This entry was already removed.");
+        setDeleteTarget(null);
+        await loadHistory();
+      } else {
+        console.error(error);
+        toast.error("Unable to delete habit entry.");
+      }
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  // Effective goals: personalized targets if loaded, DEFAULT_HABIT_GOALS
+  // otherwise. habitRows is rebuilt from these on every render so the
+  // matrix and summary cards always compare against the same numbers.
+  const goals = {
+    water_intake: targets?.water_goal ?? DEFAULT_HABIT_GOALS.water_intake,
+    sleep_hours: targets?.sleep_goal ?? DEFAULT_HABIT_GOALS.sleep_hours,
+    steps: targets?.step_goal ?? DEFAULT_HABIT_GOALS.steps,
+  };
+  const habitRows = buildHabitRows(goals);
 
   // Presentational-only derived data for the hero stats and matrix.
   const historyMap = buildHistoryMap(history);
@@ -537,6 +653,12 @@ export default function Habit() {
     formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   const scrollToHistory = () =>
     historyRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+
+  // Only the categories relevant to habits — same insights Dashboard shows,
+  // filtered here rather than fetched again differently.
+  const habitInsights = (insights ?? []).filter((ins) =>
+    ["habit_correlation", "consistency"].includes(ins.category),
+  );
 
   return (
     <DashboardLayout>
@@ -607,7 +729,7 @@ export default function Habit() {
 
         {/* ───────────────── Summary Cards ───────────────── */}
         <div className="habit-summary-grid">
-          {HABIT_ROWS.map((row, idx) => {
+          {habitRows.map((row, idx) => {
             const Icon = row.icon;
             const value = latest ? row.format(latest) : "—";
             const complete = latest ? row.isComplete(latest) : false;
@@ -680,7 +802,7 @@ export default function Habit() {
               </div>
             </div>
 
-            {HABIT_ROWS.map((row, idx) => (
+            {habitRows.map((row, idx) => (
               <MatrixRow
                 key={row.key}
                 row={row}
@@ -691,6 +813,26 @@ export default function Habit() {
             ))}
           </div>
         </motion.div>
+
+        {/* ───────────────── Habit Insights ─────────────────
+            Reuses GET /analytics/insights (no new Gemini call) filtered to
+            habit-relevant categories. Only rendered once insights have
+            loaded and there's something worth showing — silent otherwise,
+            never a hard error state on this page. */}
+        {insights !== null && habitInsights.length > 0 && (
+          <motion.div
+            className="habit-matrix-card"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, delay: 0.11, ease: "easeInOut" }}
+          >
+            <div className="matrix-header">
+              <h2>Habit Insights</h2>
+              <p>What your logged habits suggest.</p>
+            </div>
+            <InsightList insights={habitInsights} />
+          </motion.div>
+        )}
 
         {/* ───────────────── Log Form ───────────────── */}
         <motion.div
@@ -981,11 +1123,31 @@ export default function Habit() {
               aria-label="Habit history timeline"
             >
               {history.map((habit, idx) => (
-                <HistoryEntry key={habit.id} habit={habit} index={idx} />
+                <HistoryEntry
+                  key={habit.id}
+                  habit={habit}
+                  index={idx}
+                  onDelete={handleDeleteRequest}
+                />
               ))}
             </div>
           )}
         </div>
+
+        {/* ───────────────── Delete Confirmation ───────────────── */}
+        <ConfirmDialog
+          open={!!deleteTarget}
+          title="Delete habit entry?"
+          message={
+            deleteTarget
+              ? `This removes the entire entry for ${deleteTarget.date} — water, sleep, steps and workout status together. This can't be undone.`
+              : ""
+          }
+          confirmLabel="Delete Entry"
+          loading={deleting}
+          onConfirm={handleDeleteConfirm}
+          onCancel={handleDeleteCancel}
+        />
       </div>
     </DashboardLayout>
   );

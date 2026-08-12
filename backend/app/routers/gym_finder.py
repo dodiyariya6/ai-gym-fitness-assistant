@@ -1,7 +1,7 @@
 # app/routers/gym_finder.py
 """
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: gym_finder.py
 

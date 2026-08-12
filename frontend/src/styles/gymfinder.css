@@ -331,6 +331,58 @@
   gap: 20px;
 }
 
+/* ── Map ─────────────────────────────────────────────────────────────────── */
+
+.gf-map-wrapper {
+  height: 380px;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid var(--gf-border);
+}
+
+/* Leaflet's default z-index (~400-1000) can otherwise sit above the app's
+   fixed sidebar/nav — keep the map's own stacking context contained. */
+.gf-map-wrapper .leaflet-container {
+  height: 100%;
+  width: 100%;
+  z-index: 0;
+  font-family: inherit;
+}
+
+.gf-map-pin {
+  background: transparent;
+  border: none;
+}
+
+.gf-map-popup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  min-width: 160px;
+}
+
+.gf-map-popup strong {
+  font-size: 13.5px;
+  color: #111827;
+}
+
+.gf-map-popup span {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.gf-map-popup a {
+  margin-top: 4px;
+  color: #6366f1;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.gf-map-popup a:hover {
+  text-decoration: underline;
+}
+
 /* ── Gym grid ────────────────────────────────────────────────────────────── */
 
 .gf-grid {
@@ -582,6 +634,10 @@
   .gf-grid {
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   }
+
+  .gf-map-wrapper {
+    height: 320px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -622,6 +678,10 @@
 
   .gf-grid {
     grid-template-columns: 1fr;
+  }
+
+  .gf-map-wrapper {
+    height: 280px;
   }
 }
 

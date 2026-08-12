@@ -244,6 +244,58 @@
   line-height: 1.3;
 }
 
+/* ── Wellness Score (uses existing panel-card styling as its wrapper) ──── */
+
+.wellness-score-panel {
+  display: flex;
+  justify-content: center;
+}
+
+.wellness-widget {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.wellness-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 4px;
+}
+
+/* ── AI Intelligence (compact — see Reports for the deeper view) ────────── */
+
+.intelligence-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.intel-fallback-note {
+  font-size: 11px;
+  font-weight: 600;
+  color: #9ca3af;
+  background: #f3f4f6;
+  padding: 3px 9px;
+  border-radius: 999px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.intel-inline-icon {
+  vertical-align: -2px;
+  margin-right: 4px;
+}
+
+/* Per-insight row styling (.insight-list, .insight-list-item, etc.) now
+   lives in styles/insightList.css — shared with Habits.jsx via the
+   extracted <InsightList> component instead of being duplicated here. */
+
 /* ── Stats Grid ───────────────────────────────────────────────────────── */
 
 .stats-grid {

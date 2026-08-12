@@ -1,7 +1,7 @@
 # app/schemas/achievement.py
 """
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: achievement.py
 

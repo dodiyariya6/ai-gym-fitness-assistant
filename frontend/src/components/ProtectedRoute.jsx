@@ -1,7 +1,7 @@
 // src/components/ProtectedRoute.jsx
 /*
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: ProtectedRoute.jsx
 
@@ -34,11 +34,12 @@ Gym Finder page
 ==================================================
 */
 import { Navigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 export default function ProtectedRoute({ children }) {
-  const token = localStorage.getItem("token");
+  const { isAuthenticated } = useAuth();
 
-  if (!token) {
+  if (!isAuthenticated) {
     return <Navigate to="/" replace />;
   }
 

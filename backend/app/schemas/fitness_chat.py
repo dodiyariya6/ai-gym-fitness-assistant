@@ -1,7 +1,7 @@
 # app/schemas/fitness_chat.py
 """
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: fitness_chat.py
 
@@ -28,14 +28,26 @@ Virtual Gym Buddy
 ==================================================
 """
 
+from typing import Optional
+
 from pydantic import BaseModel, Field
 
 
 class ChatRequest(BaseModel):
 
-    message: str = Field(min_length=1)
+    # max_length matches the 1000-char truncation already enforced in
+    # fitness_chat_service._sanitize_input — reject oversized payloads
+    # up front with a 422 instead of silently truncating them later.
+    message: str = Field(min_length=1, max_length=1000)
+
+    # Omit to start a new conversation; pass the id returned by a previous
+    # /fitness/chat call to continue it. Ownership is enforced server-side
+    # (see chat_service.get_or_create_session) — a session_id belonging to
+    # another user is rejected, not silently reassigned.
+    session_id: Optional[int] = None
 
 
 class ChatResponse(BaseModel):
 
     reply: str
+    session_id: int

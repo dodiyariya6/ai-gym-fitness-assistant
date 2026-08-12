@@ -1,7 +1,7 @@
 # app/routers/habit.py
 """
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: habit.py
 
@@ -34,7 +34,12 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.schemas.habit import HabitCreate, HabitResponse
-from app.services.habit_service import create_habit, get_user_habits, update_habit
+from app.services.habit_service import (
+    create_habit,
+    get_user_habits,
+    update_habit,
+    delete_habit,
+)
 from app.services.auth_service import get_current_user
 
 router = APIRouter(prefix="/habit", tags=["Habit Tracker"])
@@ -69,3 +74,18 @@ def habit_history(
     db: Session = Depends(get_db), current_user=Depends(get_current_user)
 ):
     return get_user_habits(db, current_user.id)
+
+
+@router.delete("/log/{habit_id}", status_code=status.HTTP_204_NO_CONTENT)
+def remove_habit(
+    habit_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    # 404 (never 403) whether the entry doesn't exist or belongs to another
+    # user — same non-disclosure boundary already used for chat sessions.
+    deleted = delete_habit(db, current_user.id, habit_id)
+    if not deleted:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Habit entry not found."
+        )

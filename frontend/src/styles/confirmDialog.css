@@ -1,0 +1,116 @@
+/* =====================================================
+   CONFIRM DIALOG — shared across Habits/Workout/Dietician
+===================================================== */
+
+.confirm-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.confirm-dialog-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 28px;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.25);
+}
+
+.confirm-dialog-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.confirm-dialog-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(99, 102, 241, 0.12);
+  color: #4f46e5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.confirm-dialog-icon--danger {
+  background: rgba(239, 68, 68, 0.12);
+  color: #dc2626;
+}
+
+.confirm-dialog-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.confirm-dialog-message {
+  margin: 0 0 24px;
+  font-size: 13.5px;
+  color: #6b7280;
+  line-height: 1.6;
+}
+
+.confirm-dialog-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.confirm-dialog-btn {
+  flex: 1;
+  padding: 12px 20px;
+  border-radius: 14px;
+  border: none;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.confirm-dialog-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.confirm-dialog-btn--primary {
+  background: #6366f1;
+  color: #ffffff;
+}
+
+.confirm-dialog-btn--primary:hover:not(:disabled) {
+  background: #4f46e5;
+}
+
+.confirm-dialog-btn--danger {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.confirm-dialog-btn--danger:hover:not(:disabled) {
+  background: #dc2626;
+}
+
+.confirm-dialog-btn--ghost {
+  background: transparent;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+}
+
+.confirm-dialog-btn--ghost:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}

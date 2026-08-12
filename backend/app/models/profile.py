@@ -1,7 +1,7 @@
 # app/models/profile.py
 """
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: profile.py
 

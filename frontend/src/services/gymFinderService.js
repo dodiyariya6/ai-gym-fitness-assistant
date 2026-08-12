@@ -1,7 +1,7 @@
 // src/services/gymFinderService.js
 /*
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: gymFinderService.js
 
@@ -15,7 +15,6 @@ Functionality:
 - Searches nearby gyms.
 - Builds Google Maps links.
 - Handles API responses.
-- Handles authentication headers.
 
 Responsibilities:
 API communication
@@ -27,35 +26,19 @@ GymFinder page
 
 ==================================================
 */
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
+import api from "./api";
 
-function getToken() {
-  return (
-    localStorage.getItem("token") ||
-    localStorage.getItem("access_token") ||
-    ""
-  );
-}
+// Migrated from raw fetch() to the shared axios client (api.js) so this
+// service gets the same automatic Authorization header injection and the
+// same global 401 handling as every other authenticated request, instead of
+// duplicating that logic here. Public function signatures, return shapes,
+// and thrown-error messages are unchanged (same "<detail> or Request failed
+// (<status>)" contract the previous handleResponse() produced).
 
-function authHeaders() {
-  return {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${getToken()}`,
-  };
-}
-
-async function handleResponse(res) {
-  if (!res.ok) {
-    let message = `Request failed (${res.status})`;
-    try {
-      const body = await res.json();
-      message = body.detail || message;
-    } catch (_) {
-      // ignore parse error — use default message
-    }
-    throw new Error(message);
-  }
-  return res.json();
+function toError(error) {
+  const detail = error.response?.data?.detail;
+  const status = error.response?.status ?? "unknown";
+  return new Error(detail || `Request failed (${status})`);
 }
 
 export const gymFinderService = {
@@ -65,10 +48,12 @@ export const gymFinderService = {
    * geocodes it via Nominatim (OpenStreetMap). No API key required.
    */
   async getProfileLocation() {
-    const res = await fetch(`${API_BASE}/gym-finder/profile-location`, {
-      headers: authHeaders(),
-    });
-    return handleResponse(res);
+    try {
+      const res = await api.get("/gym-finder/profile-location");
+      return res.data;
+    } catch (error) {
+      throw toError(error);
+    }
   },
 
   /**
@@ -79,16 +64,14 @@ export const gymFinderService = {
    * @param {number} params.lng
    */
   async findGyms({ radiusKm, lat, lng }) {
-    const params = new URLSearchParams();
-    params.set("radius_km", String(radiusKm));
-    params.set("lat", String(lat));
-    params.set("lng", String(lng));
-
-    const res = await fetch(
-      `${API_BASE}/gym-finder/gyms?${params.toString()}`,
-      { headers: authHeaders() },
-    );
-    return handleResponse(res);
+    try {
+      const res = await api.get("/gym-finder/gyms", {
+        params: { radius_km: radiusKm, lat, lng },
+      });
+      return res.data;
+    } catch (error) {
+      throw toError(error);
+    }
   },
 
   /**

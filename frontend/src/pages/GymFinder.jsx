@@ -1,7 +1,7 @@
 // src/pages/GymFinder.jsx
 /*
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: GymFinder.jsx
 
@@ -34,6 +34,7 @@ import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { gymFinderService } from "../services/gymFinderService";
 import DashboardLayout from "../layouts/DashboardLayout";
+import GymMap from "../components/gymfinder/GymMap";
 import "../styles/gymfinder.css";
 import {
   MapPin,
@@ -437,11 +438,14 @@ export default function GymFinder() {
             {gyms.length === 0 ? (
               <EmptyState />
             ) : (
-              <div className="gf-grid">
-                {gyms.map((gym, idx) => (
-                  <GymCard key={gym.osm_id} gym={gym} index={idx} />
-                ))}
-              </div>
+              <>
+                <GymMap userLocation={location} gyms={gyms} />
+                <div className="gf-grid">
+                  {gyms.map((gym, idx) => (
+                    <GymCard key={gym.osm_id} gym={gym} index={idx} />
+                  ))}
+                </div>
+              </>
             )}
           </motion.div>
         )}

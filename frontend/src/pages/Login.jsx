@@ -1,7 +1,7 @@
 //src/pages/Login.jsx
 /*
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: Login.jsx
 
@@ -31,9 +31,14 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
 import { loginUser } from "../services/authService";
+import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
+import { resolvePostAuthDestination } from "../utils/postAuthRedirect";
 
 export default function Login() {
   const navigate = useNavigate();
+  const { login } = useAuth();
+  const { toast } = useToast();
 
   const [loading, setLoading] = useState(false);
 
@@ -69,13 +74,10 @@ export default function Login() {
         throw new Error("Invalid login response");
       }
 
-      localStorage.setItem(
-        "token",
+      login(response.access_token);
 
-        response.access_token,
-      );
-
-      navigate("/dashboard");
+      const destination = await resolvePostAuthDestination();
+      navigate(destination, { replace: true });
     } catch (error) {
       console.error(
         "Login Error:",
@@ -83,7 +85,9 @@ export default function Login() {
         error,
       );
 
-      alert(error.response?.data?.detail || "Login failed. Please try again.");
+      toast.error(
+        error.response?.data?.detail || "Login failed. Please try again.",
+      );
     } finally {
       setLoading(false);
     }
@@ -92,10 +96,18 @@ export default function Login() {
   return (
     <div className="auth-container">
       <form className="auth-form" onSubmit={handleSubmit}>
+        <div className="auth-brand">
+          <span className="auth-brand-mark">IFA</span>
+          <span className="auth-brand-full">Intelligent Fitness Assistant</span>
+          <span className="auth-brand-tagline">
+            Your Personal AI Gym &amp; Fitness Assistant
+          </span>
+        </div>
+
         <div>
           <h1>Login</h1>
 
-          <p>Access your AI Gym dashboard</p>
+          <p>Access your dashboard</p>
         </div>
 
         <input

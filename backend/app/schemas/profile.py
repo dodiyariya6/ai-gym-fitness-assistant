@@ -1,7 +1,7 @@
 # app/schemas/profile.py
 """
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: profile.py
 
@@ -39,7 +39,7 @@ from pydantic import BaseModel
 from typing import Optional, List
 
 
-class ProfileCreate(BaseModel):
+class ProfileBase(BaseModel):
     name: Optional[str] = None
     age: Optional[int] = None
     gender: Optional[str] = None
@@ -52,17 +52,12 @@ class ProfileCreate(BaseModel):
     activity_level: Optional[str] = None
 
 
-class ProfileUpdate(BaseModel):
-    name: Optional[str] = None
-    age: Optional[int] = None
-    gender: Optional[str] = None
-    height: Optional[float] = None
-    weight: Optional[float] = None
-    city: Optional[str] = None
-    state: Optional[str] = None
-    country: Optional[str] = None
-    fitness_goals: Optional[List[str]] = None
-    activity_level: Optional[str] = None
+class ProfileCreate(ProfileBase):
+    pass
+
+
+class ProfileUpdate(ProfileBase):
+    pass
 
 
 class ProfileResponse(BaseModel):

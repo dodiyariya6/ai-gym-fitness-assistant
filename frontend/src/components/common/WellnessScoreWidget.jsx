@@ -1,7 +1,7 @@
 // src/components/common/WellnessScoreWidget.jsx
 /*
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: WellnessScoreWidget.jsx
 

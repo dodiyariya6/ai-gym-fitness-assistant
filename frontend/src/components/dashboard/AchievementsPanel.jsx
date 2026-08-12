@@ -1,7 +1,7 @@
 // src/components/dashboard/AchievementsPanel.jsx
 /*
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: AchievementsPanel.jsx
 

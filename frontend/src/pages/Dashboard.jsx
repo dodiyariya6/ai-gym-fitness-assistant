@@ -1,7 +1,7 @@
 // src/pages/Dashboard.jsx
 /*
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: Dashboard.jsx
 
@@ -14,6 +14,7 @@ Functionality:
 - Displays fitness analytics.
 - Displays workout trends.
 - Displays wellness scores.
+- Surfaces top AI insights (see /analytics/insights).
 - Displays consistency tracking.
 - Displays achievements.
 - Displays recent activities.
@@ -37,13 +38,14 @@ import { motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import DashboardLayout from "../layouts/DashboardLayout";
 import WorkoutChart from "../components/charts/WorkoutChart";
-import { getAnalytics } from "../services/analyticsService";
+import { getAnalytics, getInsights } from "../services/analyticsService";
 import { getProfile } from "../services/profileService";
 import { getConsistency } from "../services/consistencyService";
 import { getAchievements } from "../services/achievementService";
 import ConsistencyTracker from "../components/dashboard/ConsistencyTracker";
 import AchievementsPanel from "../components/dashboard/AchievementsPanel";
 import WellnessScoreWidget from "../components/common/WellnessScoreWidget";
+import InsightList from "../components/common/InsightList";
 import {
   Dumbbell,
   Activity,
@@ -62,6 +64,8 @@ import {
   Flame,
   Timer,
   Droplets,
+  Sparkles,
+  AlertCircle,
 } from "lucide-react";
 import "../styles/dashboard.css";
 
@@ -226,12 +230,21 @@ export default function Dashboard() {
   const [consistency, setConsistency] = useState(null);
   const [achievements, setAchievements] = useState(null);
 
+  // Intelligence section state — deliberately independent of `analytics`/
+  // `error` above. Insights are a value-add on top of a dashboard that
+  // already works from analytics alone, so a failure here must never block
+  // or blank out the rest of the page (see fetchInsights below).
+  const [insights, setInsights] = useState(null); // null = still loading
+  const [insightsSource, setInsightsSource] = useState(null);
+  const [insightsError, setInsightsError] = useState(false);
+
   // BUG FIX: Include location.pathname (or location.key) in the dependency
   // array so analytics re-fetch every time the Dashboard route is activated,
   // not just on the initial mount.  This guarantees today's habit records
   // (water, sleep, steps) are always reflected when the user returns here.
   useEffect(() => {
     fetchAnalytics();
+    fetchInsights();
   }, [location.pathname]);
 
   useEffect(() => {
@@ -276,6 +289,24 @@ export default function Dashboard() {
     } catch (err) {
       console.error(err);
       setError(true);
+    }
+  };
+
+  // Fetches the structured, grounded insights already computed server-side
+  // (GET /analytics/insights — see ai_insight_service.py). No AI call and no
+  // analytics math happens here; this only fetches and displays. Errors are
+  // caught locally so a failed/slow insights call never breaks the rest of
+  // the dashboard, which renders from `analytics` independently.
+  const fetchInsights = async () => {
+    setInsights(null);
+    setInsightsError(false);
+    try {
+      const data = await getInsights();
+      setInsights(data?.insights ?? []);
+      setInsightsSource(data?.source ?? null);
+    } catch (err) {
+      console.error(err);
+      setInsightsError(true);
     }
   };
 
@@ -542,6 +573,71 @@ export default function Dashboard() {
                 value={parseFloat(analytics.workout_completion_rate) || 0}
               />
             </motion.div>
+          </div>
+        </motion.section>
+
+        {/* ── Wellness Score ────────────────────────────────── */}
+        {/* Reuses the existing health_score/current_streak already
+            calculated by analytics_service.py — no second calculation. */}
+        <motion.section
+          className="wellness-score-section"
+          variants={fadeUp}
+          initial="hidden"
+          animate="visible"
+          custom={0.5}
+        >
+          <div className="panel-card wellness-score-panel">
+            <WellnessScoreWidget
+              score={analytics.health_score ?? 0}
+              streak={analytics.current_streak ?? 0}
+            />
+          </div>
+        </motion.section>
+
+        {/* ── AI Intelligence ───────────────────────────────── */}
+        {/* Compact surface for GET /analytics/insights — answers "what
+            should I pay attention to?" alongside the wellness score's
+            "how am I doing?". Deeper detail lives on the Reports page. */}
+        <motion.section
+          className="intelligence-section"
+          variants={fadeUp}
+          initial="hidden"
+          animate="visible"
+          custom={0.75}
+        >
+          <div className="panel-card intelligence-panel">
+            <div className="panel-header intelligence-header">
+              <div>
+                <h3 className="panel-title">What to Focus On</h3>
+                <p className="panel-subtitle">Grounded in your real data</p>
+              </div>
+              {insightsSource === "fallback" && insights && insights.length > 0 && (
+                <span className="intel-fallback-note" title="AI is temporarily unavailable — showing rule-based insights">
+                  Rule-based
+                </span>
+              )}
+            </div>
+
+            {insights === null && !insightsError && (
+              <p className="empty-state-text">
+                <Sparkles size={14} className="intel-inline-icon" /> Analyzing your data…
+              </p>
+            )}
+
+            {insightsError && (
+              <p className="empty-state-text">
+                <AlertCircle size={14} className="intel-inline-icon" /> Insights are
+                temporarily unavailable. Your dashboard is unaffected.
+              </p>
+            )}
+
+            {!insightsError && insights !== null && (
+              <InsightList
+                insights={insights}
+                limit={2}
+                emptyText="Log a workout or habit entry to unlock personalized insights."
+              />
+            )}
           </div>
         </motion.section>
 

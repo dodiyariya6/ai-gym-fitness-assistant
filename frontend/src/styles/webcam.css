@@ -397,6 +397,167 @@ kbd {
   margin: 0;
 }
 
+.webcam-tip-warning {
+  color: #b45309;
+}
+
+/* ══════════════════════════════════════════════════
+   LIVE CAMERA SESSION (getUserMedia + on-device pose
+   detection — see utils/exerciseCounters.js)
+══════════════════════════════════════════════════ */
+
+.webcam-live-card {
+  align-items: center;
+}
+
+.live-video-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 720px;
+  aspect-ratio: 4 / 3;
+  margin: 0 auto;
+  background: #111827;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.live-video,
+.live-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* Mirrored so the preview matches how a mirror (and the old native
+     OpenCV window) showed the user — left/right feel natural to move in. */
+  transform: scaleX(-1);
+}
+
+.live-video {
+  z-index: 0;
+}
+
+.live-canvas {
+  z-index: 1;
+  pointer-events: none;
+}
+
+.live-overlay-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: rgba(17, 24, 39, 0.75);
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.live-hud {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 12px 18px;
+  background: rgba(17, 24, 39, 0.62);
+  backdrop-filter: blur(6px);
+  border-radius: 16px;
+  color: #ffffff;
+}
+
+.live-hud-count {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.live-hud-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #d1d5db;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 2px;
+}
+
+.live-hud-feedback {
+  margin-top: 8px;
+  padding: 4px 10px;
+  background: rgba(99, 102, 241, 0.9);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.stop-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 720px;
+  height: 54px;
+  background: #ef4444;
+  color: #ffffff;
+  border: none;
+  border-radius: 16px;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 0.22s ease,
+    transform 0.22s ease,
+    box-shadow 0.22s ease;
+}
+
+.stop-btn:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(239, 68, 68, 0.28);
+}
+
+.stop-btn:focus-visible {
+  outline: 2px solid #ef4444;
+  outline-offset: 2px;
+}
+
+/* ── Camera Error State ─────────────────────────── */
+
+.webcam-error-card {
+  align-items: center;
+  text-align: center;
+  gap: 14px;
+}
+
+.webcam-error-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #fee2e2;
+  color: #dc2626;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.webcam-error-message {
+  font-size: 0.9375rem;
+  color: #6b7280;
+  line-height: 1.6;
+  max-width: 440px;
+  margin: 0;
+}
+
 /* ══════════════════════════════════════════════════
    SESSION COMPLETION
 ══════════════════════════════════════════════════ */

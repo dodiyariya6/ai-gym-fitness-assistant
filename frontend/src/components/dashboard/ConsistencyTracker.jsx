@@ -1,7 +1,7 @@
 // src/components/dashboard/ConsistencyTracker.jsx
 /*
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: ConsistencyTracker.jsx
 

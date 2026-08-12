@@ -1,7 +1,7 @@
 # app/routers/workout.py
 """
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: workout.py
 
@@ -29,7 +29,7 @@ AI Consistency Tracker
 ==================================================
 """
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from sqlalchemy.orm import Session
 
@@ -37,7 +37,11 @@ from app.database import get_db
 
 from app.schemas.workout import WorkoutCreate, WorkoutResponse
 
-from app.services.workout_service import create_workout, get_user_workouts
+from app.services.workout_service import (
+    create_workout,
+    get_user_workouts,
+    delete_workout,
+)
 
 from app.services.auth_service import get_current_user
 
@@ -56,7 +60,26 @@ def save_workout(
 
 @router.get("/history", response_model=list[WorkoutResponse])
 def workout_history(
-    db: Session = Depends(get_db), current_user=Depends(get_current_user)
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
 ):
 
-    return get_user_workouts(db, current_user.id)
+    return get_user_workouts(db, current_user.id, limit=limit, offset=offset)
+
+
+@router.delete("/{workout_id}", status_code=status.HTTP_204_NO_CONTENT)
+def remove_workout(
+    workout_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    # 404 (never 403) whether the workout doesn't exist or belongs to
+    # another user. Covers manual AND webcam-generated workouts — both are
+    # plain Workout rows saved through the same create_workout() pathway.
+    deleted = delete_workout(db, current_user.id, workout_id)
+    if not deleted:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Workout not found."
+        )

@@ -1,7 +1,7 @@
 # app/models/habit.py
 """
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: habit.py
 
@@ -39,7 +39,7 @@ class Habit(Base):
     __tablename__ = "habits"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
 
     # ORM layer (if the 422 was somehow bypassed) and caused Pydantic to
     # reject decimal inputs with HTTP 422 when validation ran first.
@@ -49,4 +49,4 @@ class Habit(Base):
 
     steps = Column(Integer, nullable=False)  # unchanged
     workout_done = Column(Boolean, default=False, nullable=False)
-    date = Column(Date, nullable=False)
+    date = Column(Date, nullable=False, index=True)

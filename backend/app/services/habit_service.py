@@ -1,7 +1,7 @@
 # app/services/habit_service.py
 """
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: habit_service.py
 
@@ -85,3 +85,21 @@ def get_user_habits(db, user_id):
         .order_by(Habit.date.desc())
         .all()
     )
+
+
+def delete_habit(db, user_id, habit_id) -> bool:
+    """
+    Deletes the habit entry if it exists and belongs to user_id.
+    Returns False (never raises) when the entry is missing or owned by
+    someone else, so the router can respond 404 either way — same
+    non-disclosure pattern as update_habit() above.
+    """
+    habit = (
+        db.query(Habit).filter(Habit.id == habit_id, Habit.user_id == user_id).first()
+    )
+    if not habit:
+        return False
+
+    db.delete(habit)
+    db.commit()
+    return True

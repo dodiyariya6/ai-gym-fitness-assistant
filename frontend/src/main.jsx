@@ -1,7 +1,7 @@
 // src/main.jsx
 /*
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: main.jsx
 
@@ -42,5 +42,6 @@ import "./styles/workout.css";
 import "./styles/responsive.css";
 import "./styles/auth.css";
 import "./styles/profile.css";
+import "./styles/toast.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(<App />);

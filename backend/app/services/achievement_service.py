@@ -1,7 +1,7 @@
 # app/services/achievement_service.py
 """
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: achievement_service.py
 
@@ -31,7 +31,7 @@ AI Achievement System
 ==================================================
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.models.achievement import AchievementProgress
 from app.models.workout import Workout
@@ -236,7 +236,7 @@ def evaluate_achievements(db, user_id: int) -> dict:
 
         if is_unlocked and not row.unlocked:
             row.unlocked = True
-            row.unlocked_at = datetime.utcnow()
+            row.unlocked_at = datetime.now(timezone.utc)
 
         if row.unlocked:
             unlocked_count += 1

@@ -1,7 +1,7 @@
 // src/services/habitService.js
 /*
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: habitService.js
 
@@ -70,6 +70,19 @@ export const getHabitHistory = async () => {
       "/habit/history"
     );
     return response.data;
+  }
+  catch (error) {
+    console.error(
+      "Habit Service Error:",
+      error
+    );
+    throw error;
+  }
+};
+
+export const deleteHabit = async (habitId) => {
+  try {
+    await api.delete(`/habit/log/${habitId}`);
   }
   catch (error) {
     console.error(

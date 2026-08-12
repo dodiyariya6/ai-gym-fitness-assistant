@@ -10,16 +10,17 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@tailwindcss/vite": "^4.3.0",
+    "@mediapipe/tasks-vision": "^1.0.1",
     "axios": "^1.16.1",
     "framer-motion": "^12.40.0",
+    "leaflet": "^1.9.4",
     "lucide-react": "^1.17.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
+    "react-leaflet": "^5.0.0",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.16.0",
-    "recharts": "^3.8.1",
-    "tailwindcss": "^4.3.0"
+    "recharts": "^3.8.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

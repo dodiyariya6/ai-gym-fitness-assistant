@@ -1,7 +1,7 @@
 // src/services/analyticsService.js
 /*
 ==================================================
-AI Gym & Fitness Assistant
+IFA — Intelligent Fitness Assistant
 
 File: analyticsService.js
 
@@ -48,6 +48,34 @@ export const getAnalytics = async () => {
     return response.data;
   } catch (error) {
     console.error("Analytics Service Error:", error);
+    throw error;
+  }
+};
+
+// Grounded, structured AI insights (see ai_insight_service.py). Falls back
+// to deterministic-only insights server-side if Gemini is unavailable —
+// the response always has the same shape, so the caller never needs to
+// special-case failure beyond the normal try/catch.
+export const getInsights = async () => {
+  try {
+    const response = await api.get("/analytics/insights");
+    return response.data;
+  } catch (error) {
+    console.error("Insights Service Error:", error);
+    throw error;
+  }
+};
+
+// Deterministic, uncapped, per-exercise progressive-overload trend — no AI
+// call (see progressive_overload_service.py). Used by the Workout page's
+// Coach Notes panel, which wants every exercise, not just whichever made
+// the capped /analytics/insights top-6.
+export const getProgressiveOverload = async () => {
+  try {
+    const response = await api.get("/analytics/progressive-overload");
+    return response.data;
+  } catch (error) {
+    console.error("Progressive Overload Service Error:", error);
     throw error;
   }
 };
