@@ -103,7 +103,13 @@ class MealPlanResponse(BaseModel):
     diet_type: str
     meal_plan: str
     grocery_list: Optional[str] = None
-    created_at: datetime
+    # Optional — defensive against any pre-existing row whose created_at was
+    # inserted NULL before app/models/meal_plan.py gained its Python-side
+    # default (see that file for why the DB-side server_default alone
+    # wasn't reliably applied on the live table). New rows always populate
+    # this now; this just stops an old row from turning a whole
+    # /diet/history response into a 500.
+    created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
